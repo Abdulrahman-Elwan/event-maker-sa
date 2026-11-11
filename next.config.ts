@@ -15,6 +15,15 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/dw8nuv7r8/image/upload/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

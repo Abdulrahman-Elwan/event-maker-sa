@@ -1,0 +1,226 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================
+    // 1. المدير الرئيسي
+    // =========================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSuperAdmin() {
+      return signedIn()
+        && request.auth.uid == 'LEZL50X9HGPB9MtmD1b9vrptQkD3';
+    }
+
+    // =========================================
+    // 2. التحقق من صلاحيات المدير الفرعي
+    // =========================================
+
+    function hasPermission(permission) {
+      return isSuperAdmin()
+        || (
+          signedIn()
+          && exists(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          )
+          && get(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          ).data.active == true
+          && get(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          ).data.permissions[permission] == true
+        );
+    }
+
+    // =========================================
+    // 3. إدارة المديرين
+    // المدير الرئيسي فقط يستطيع إدارة المستندات
+    // =========================================
+
+    match /admins/{adminId} {
+      allow read: if isSuperAdmin()
+        || (signedIn() && request.auth.uid == adminId);
+
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    // =========================================
+    // 4. الرئيسية
+    // =========================================
+
+    match /site_content/home {
+      allow read: if true;
+      allow create, update, delete: if hasPermission('setting');
+    }
+
+    // =========================================
+    // 5. المعارض وسلاسل المعارض
+    // =========================================
+
+    match /exhibitions/{exhibitionId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('exhibitions');
+    }
+
+    match /exhibition_categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('exhibitions');
+    }
+
+    match /exhibition_sectors/{sectorId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('exhibitions');
+    }
+
+    // سلاسل المعارض
+    match /exhibition_series/{seriesId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('exhibitions');
+    }
+
+    // =========================================
+    // 6. المدونة
+    // =========================================
+
+    match /blog_posts/{postId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('blog');
+    }
+
+    match /blog_categories/{categoryId} {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('blog');
+    }
+
+    // =========================================
+    // 7. المستندات المشتركة داخل site_content
+    // كل مستند محمي بصلاحية القسم التابع له
+    // =========================================
+
+    match /site_content/about {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('about');
+    }
+
+    match /site_content/services {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('services');
+    }
+
+    match /site_content/blog {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('blog');
+    }
+
+    match /site_content/exhibitions {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('exhibitions');
+    }
+
+    match /site_content/sessions {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('sessions');
+    }
+
+    // إعدادات الموقع ليست عامة افتراضيًا.
+    // نراجع احتياج الموقع العام لقراءتها قبل فتحها.
+    match /site_content/settings {
+      allow read, create, update, delete:
+        if hasPermission('setting');
+    }
+
+    match /site_content/setting {
+      allow read, create, update, delete:
+        if hasPermission('setting');
+    }
+
+    // =========================================
+    // 8. إعدادات الموقع القديمة
+    // =========================================
+
+    match /site_content/settings {
+      allow read, create, update, delete:
+        if hasPermission('setting');
+    }
+
+    match /site_content/setting {
+      allow read, create, update, delete:
+        if hasPermission('setting');
+    }
+
+    // =========================================
+    // 9. إعدادات الموقع الجديدة
+    // =========================================
+
+    // بيانات التواصل
+    match /site_settings/settings_contact {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('settingsContact');
+    }
+
+    // روابط السوشيال ميديا
+    match /site_settings/settings_social {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('settingsSocial');
+    }
+
+    // الملف التعريفي للشركة
+    match /site_settings/settings_company_profile {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('settingsProfile');
+    }
+
+    // ثيم الشركة وثيمات المعارض
+    match /site_settings/settings_themes {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('settingsTheme');
+    }
+
+    // إعدادات الصفحة الرئيسية وجدولة حملة المعرض
+    match /site_settings/settings_homepage {
+      allow read: if true;
+      allow create, update, delete:
+        if hasPermission('settingsTheme');
+    }
+
+    // =========================================
+    // 10. تسجيلات المعارض
+    // =========================================
+
+    match /exhibition_registrations/{registrationId} {
+
+      // المدير الرئيسي والمدير الفرعي صاحب صلاحية المعارض
+      // يمكنهم قراءة التسجيلات
+      allow read: if hasPermission('exhibitions');
+
+      // الكتابة والتعديل والحذف من خلال Firebase Admin SDK فقط
+      // لا نسمح بالوصول المباشر من المتصفح
+      allow create, update, delete: if false;
+    }
+    // =========================================
+    // 10. أي Collection أو مستند غير محدد
+    // ممنوع الوصول إليه افتراضيًا
+    // =========================================
+
+  }
+}

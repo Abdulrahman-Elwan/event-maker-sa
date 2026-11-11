@@ -1,0 +1,729 @@
+تمام يا معلم، التوضيح ده مهم جدًا، وكده **الـ Gap دي اتقفلت**. 👌
+
+يعني عندنا المنطق:
+
+```text
+Homepage Mode = Exhibition
+        ↓
+exhibition_id = X
+        ↓
+نقرأ end_date من المعرض X
+        ↓
+هل تاريخ المعرض انتهى؟
+   │
+   ├── لا → Exhibition Landing
+   │
+   └── نعم → Company Homepage
+```
+
+وبالتالي **مش محتاجين `landing_end_date`** طالما القرار المقصود هو أن الـ Landing Page تنتهي تلقائيًا بانتهاء المعرض نفسه. وهنحافظ على المنطق الحالي بدل ما نضيف حقل جديد بدون داعي.
+
+---
+
+# الخطة اللي هنمشي عليها
+
+أنا عايزنا نمشي في المشروع كأننا بنبني **منتج Production حقيقي**، مش مجرد صفحة UI.
+
+```text
+                    Event Maker
+                        │
+                ┌───────┴────────┐
+                │                │
+           Admin Dashboard   Public Website
+                │                │
+                └───────┬────────┘
+                        ↓
+                    Firebase
+                        │
+              ┌─────────┴─────────┐
+              ↓                   ↓
+           Firestore           Cloudinary
+```
+
+والـ Public Website هيكون **Read Only** بالنسبة لـ Firebase.
+
+---
+
+# المرحلة 0 — حماية المشروع 🔐
+
+دي أول حاجة نعملها قبل أي Firebase code.
+
+## 1. `.env.local`
+
+هنحط الـ Secrets في:
+
+```text
+.env.local
+```
+
+وده الملف اللي **ما يترفعش على GitHub**.
+
+مثلاً:
+
+```env
+FIREBASE_PROJECT_ID=...
+FIREBASE_CLIENT_EMAIL=...
+FIREBASE_PRIVATE_KEY="..."
+```
+
+ولو احتجنا Cloudinary أو أي API Secret بعدين:
+
+```env
+CLOUDINARY_API_SECRET=...
+```
+
+### مهم جدًا
+
+مش هنحط:
+
+```text
+private key
+client email
+API secret
+service account
+```
+
+داخل:
+
+```text
+components/
+app/
+public/
+GitHub
+```
+
+---
+
+# 2. `.gitignore`
+
+نتأكد إن عندنا:
+
+```gitignore
+.env
+.env.local
+.env.*.local
+```
+
+وبالتالي لو عملت:
+
+```bash
+git add .
+```
+
+الـ secrets مش هتدخل Git.
+
+---
+
+# 3. `.env.example`
+
+دي حركة مهمة جدًا عشان لو وقفت المشروع 6 شهور ورجعت له تعرف محتاج إيه.
+
+نعمل:
+
+```text
+.env.example
+```
+
+مثلاً:
+
+```env
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+```
+
+**لكن بدون أي قيم حقيقية.**
+
+يعني:
+
+```text
+.env.local       ← الأسرار الحقيقية
+.env.example     ← أسماء المتغيرات فقط
+```
+
+---
+
+# 4. لو رفعت المشروع GitHub
+
+الـ GitHub يحتوي:
+
+```text
+.env.example
+```
+
+ولا يحتوي:
+
+```text
+.env.local
+```
+
+ولو بالغلط الـ Secret اتعمل له commit في أي وقت، مش مجرد نمسح الملف ونقول خلاص؛ لازم **نغيّر/نلغي الـ credential نفسه**.
+
+---
+
+# المرحلة 1 — تثبيت الـ Foundation
+
+بعد كده نجهز:
+
+```text
+Next.js
+Firebase Admin
+TypeScript
+```
+
+ولو المشروع بالفعل TypeScript، هنكمل عليه.
+
+وهنثبت فقط الحزم اللي نحتاجها فعلًا.
+
+مش هنجيب 20 مكتبة Animation وUI من أول يوم.
+
+---
+
+# المرحلة 2 — Firebase Connection
+
+هنعمل Layer مستقلة:
+
+```text
+lib/
+└── firebase/
+    └── admin.ts
+```
+
+وظيفتها فقط:
+
+> إنشاء اتصال Firebase Admin آمن على السيرفر.
+
+مش هنخلي كل Component يعمل Firebase initialization.
+
+---
+
+# المرحلة 3 — Data Layer
+
+بعد الاتصال، نعمل:
+
+```text
+lib/
+└── data/
+    ├── theme.ts
+    ├── homepage.ts
+    ├── exhibitions.ts
+    ├── services.ts
+    ├── about.ts
+    ├── company.ts
+    └── contact.ts
+```
+
+مثلاً:
+
+```text
+getTheme()
+getHomepageSettings()
+getExhibitions()
+getServices()
+getAbout()
+getCompanyProfile()
+getContact()
+```
+
+وهنا بنعمل فصل مهم:
+
+```text
+Firebase
+   ↓
+Data Layer
+   ↓
+UI
+```
+
+فلو Firebase Structure اتغير مستقبلًا، مش هنعدل كل الصفحة.
+
+---
+
+# المرحلة 4 — Theme System 🎨
+
+دي هتبقى واحدة من أهم مراحل المشروع.
+
+الـ Dashboard يعطي:
+
+```text
+Arabic Font
+English Font
+Primary Color
+Secondary Color
+...
+```
+
+إحنا نحولهم إلى Design Tokens.
+
+مثلاً:
+
+```text
+--color-primary
+--color-secondary
+--color-accent
+--color-background
+--color-surface
+--color-text
+--color-muted
+
+--font-arabic
+--font-english
+```
+
+وبعدها الـ UI كله يستخدم:
+
+```text
+var(--color-primary)
+```
+
+بدل:
+
+```text
+#C9A66B
+```
+
+وبالتالي:
+
+**تغيير Theme من Dashboard → تغيير شكل الموقع.**
+
+---
+
+# المرحلة 5 — Homepage Resolver
+
+دي النقطة اللي وضحتها دلوقتي.
+
+هنعمل Logic مركزي يقرر الصفحة:
+
+```text
+getHomepageMode()
+```
+
+والمنطق:
+
+```text
+هل mode = company؟
+       ↓
+Company Homepage
+```
+
+أو:
+
+```text
+mode = exhibition
+       ↓
+جيب exhibition_id
+       ↓
+جيب المعرض
+       ↓
+افحص end_date
+       ↓
+هل المعرض ما زال قائمًا؟
+       │
+       ├── YES → Landing Page
+       │
+       └── NO → Company Homepage
+```
+
+وده هيكون **في مكان واحد فقط**.
+
+مش كل Component يعمل نفس الـ check.
+
+---
+
+# المرحلة 6 — Shared Design System
+
+بعد ما البيانات والـ Theme جاهزين، نبدأ الـ UI.
+
+نعمل Components مشتركة:
+
+```text
+components/
+└── shared/
+    ├── Navbar
+    ├── Footer
+    ├── Button
+    ├── SectionHeader
+    ├── Container
+    ├── Image
+    └── ...
+```
+
+وده يمنع التكرار بين:
+
+**Company Homepage**
+
+و
+
+**Exhibition Landing**
+
+---
+
+# المرحلة 7 — Company Homepage
+
+هننفذها بالترتيب:
+
+```text
+Navbar
+↓
+Hero
+↓
+Exhibitions
+↓
+Services
+↓
+Partners
+↓
+Stats
+↓
+About
+↓
+Contact
+↓
+Footer
+```
+
+والـ Sections كلها Dynamic.
+
+مثلاً:
+
+```text
+Exhibitions
+   ↓
+Firestore
+   ↓
+Filter
+   ↓
+6 Cards
+```
+
+مش Data ثابتة.
+
+---
+
+# المرحلة 8 — Exhibition Landing Page
+
+بعد الـ Homepage:
+
+```text
+Campaign Navbar
+↓
+Hero
+↓
+Exhibition Overview
+↓
+Why Participate
+↓
+Highlights
+↓
+Target Audience
+↓
+Date / Location
+↓
+Exhibitor CTA
+↓
+Visitor Registration
+↓
+Contact
+↓
+Footer
+```
+
+والـ Data كلها من:
+
+```text
+exhibitions/{exhibitionId}
+```
+
+---
+
+# المرحلة 9 — UX / Animation
+
+بعد ما الـ UI الأساسي يشتغل:
+
+### Services
+
+الـ interaction اللي اخترناه:
+
+```text
+Service list
+      ↓
+Active service
+      ↓
+Image transition
+      ↓
+Content transition
+```
+
+### Partners
+
+صفين:
+
+```text
+← ← ← ←
+→ → → →
+```
+
+بحركة ناعمة.
+
+### Exhibitions
+
+Filter:
+
+```text
+الكل | قائم | منتهي
+```
+
+### Numbers
+
+Counter animation لو مناسب.
+
+---
+
+# المرحلة 10 — Responsive
+
+مش هنصمم Desktop وبعدين "نصغر".
+
+هنراجع:
+
+```text
+Mobile
+Tablet
+Desktop
+Large Desktop
+```
+
+خصوصًا:
+
+- Navbar
+- Exhibition cards
+- Services
+- Partner sliders
+- Stats
+- Contact form
+- Landing CTA
+
+والـ Arabic RTL يكون جزء من التصميم من البداية.
+
+---
+
+# المرحلة 11 — SEO + Performance
+
+بعد اكتمال الـ UI:
+
+- Metadata
+- Open Graph
+- Canonical
+- Sitemap
+- Robots
+- Semantic HTML
+- Image optimization
+- `next/image`
+- Lazy loading
+- Font optimization
+- Core Web Vitals
+
+خصوصًا إن الصفحة الرئيسية عندنا Dynamic.
+
+---
+
+# المرحلة 12 — Testing
+
+قبل ما نقول خلصنا:
+
+### Homepage
+
+```text
+No campaign
+      ↓
+Company Homepage
+```
+
+### Active Exhibition
+
+```text
+Campaign enabled
+      ↓
+Landing Page
+```
+
+### Exhibition ended
+
+```text
+end_date passed
+      ↓
+Company Homepage
+```
+
+### Invalid exhibition
+
+```text
+exhibition_id invalid
+      ↓
+Company Homepage
+```
+
+وده مهم جدًا لأنه موجود في الـ Brief بتاعنا.
+
+---
+
+# 🔐 أهم جزء: لما توقف المشروع وترجع له بعد فترة
+
+عايزك من أول يوم يكون عندك الشكل ده:
+
+```text
+event-maker-web/
+│
+├── .env.local          🔒 لا يترفع
+├── .env.example        📋 يترفع
+├── .gitignore
+├── README.md
+│
+├── app/
+├── components/
+├── lib/
+├── types/
+└── public/
+```
+
+وفي `README.md` نوثق:
+
+```text
+Event Maker Public Website
+
+1. Install dependencies
+2. Create .env.local
+3. Copy variables from .env.example
+4. Add Firebase credentials
+5. Run development server
+```
+
+فلو رجعت للمشروع بعد سنة:
+
+```text
+git clone
+↓
+npm install
+↓
+.env.local
+↓
+Firebase credentials
+↓
+npm run dev
+```
+
+وتكمل عادي.
+
+---
+
+# 🔐 وهنفصل بين Development وProduction
+
+في البداية:
+
+```text
+.env.local
+```
+
+للتطوير المحلي.
+
+وعند النشر، مثلاً على Vercel:
+
+```text
+Vercel Environment Variables
+```
+
+مش هنرفع `.env.local` للسيرفر.
+
+ويبقى عندنا:
+
+```text
+Local
+  ↓
+.env.local
+
+Production
+  ↓
+Vercel Environment Variables
+```
+
+---
+
+# ⚠️ نقطة أمنية مهمة جدًا
+
+بما إننا هنستخدم **Firebase Admin SDK**:
+
+أي متغير فيه:
+
+```text
+PRIVATE_KEY
+CLIENT_EMAIL
+SERVICE_ACCOUNT
+SECRET
+```
+
+لازم يظل **Server Only**.
+
+ومش هنستخدمه داخل:
+
+```text
+"use client"
+```
+
+ولا نمرره للـ browser.
+
+أما لو احتجنا لاحقًا Firebase Client SDK في جزء معين، هنحدد بالضبط إيه الـ public config وإيه الـ secret قبل استخدامه.
+
+---
+
+# 🗺️ الخطة النهائية باختصار
+
+```text
+                    START
+                      │
+                      ▼
+              🔐 ENV + SECURITY
+                      │
+                      ▼
+             🔥 Firebase Admin
+                      │
+                      ▼
+                DATA LAYER
+                      │
+                      ▼
+               🎨 THEME SYSTEM
+                      │
+                      ▼
+            🧠 HOMEPAGE RESOLVER
+                      │
+             ┌────────┴────────┐
+             ▼                 ▼
+       COMPANY HOME       EXHIBITION LANDING
+             │                 │
+             └────────┬────────┘
+                      ▼
+              SHARED COMPONENTS
+                      │
+                      ▼
+                RESPONSIVE
+                      │
+                      ▼
+             ANIMATIONS / UX
+                      │
+                      ▼
+                SEO / SPEED
+                      │
+                      ▼
+                  TESTING
+                      │
+                      ▼
+                 PRODUCTION
+```
+
+**وأنا أقترح بشدة إننا ما نستعجلش في الـ UI دلوقتي.** أنت بالفعل عملت التصميم، والـ Firebase/Dashboard موجود؛ فأذكى خطوة دلوقتي هي نبني الـ Foundation صح.
+
+### الخطوة رقم 1 التي سننفذها الآن:
+
+**نجهز `.env.local` + `.env.example` + `.gitignore` ثم نعمل Firebase Admin connection ونختبر فقط إن Next.js قادر يقرأ `settings_homepage` من Firebase.**
+
+وبعد نجاح الاختبار ننتقل للـ Theme.
+
+كده كل خطوة عندنا هتكون **صغيرة، قابلة للاختبار، وممكن ترجع لها بسهولة لو وقفت المشروع فترة**.

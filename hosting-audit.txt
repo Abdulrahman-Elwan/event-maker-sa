@@ -1,0 +1,5643 @@
+﻿
+==================================================
+FILE: app/[locale]/layout.tsx
+==================================================
+// app\[locale]\layout.tsx
+import { Suspense, type CSSProperties } from "react";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Geist, Geist_Mono } from "next/font/google";
+import Navbar from "@/components/layout/Navbar";
+import Footer from "@/components/layout/Footer";
+import { locales, type Locale } from "@/lib/i18n/config";
+import { getActiveTheme } from "@/lib/data/theme";
+import { getHomepageSettings } from "@/lib/data/homepage";
+import { getServices } from "@/lib/data/services";
+import { getContactSettings, getSocialSettings, } from "@/lib/data/siteSettings";
+import { getTodayDate } from "@/lib/data/getTodayDate";
+import "../globals.css";
+import WhatsappIcon from "@/components/layout/WhatsappIcon";
+import CookieConsent from "@/components/layout/CookieConsent";
+
+/* Fonts */
+const geistSans = Geist({
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
+});
+
+/* Google Fonts URL */
+function getGoogleFontsUrl(arabicFont: string, englishFont: string) {
+    const params = new URLSearchParams();
+    params.append("family", arabicFont);
+    if (englishFont !== arabicFont) { params.append("family", englishFont); }
+    params.append("display", "swap");
+    return `https://fonts.googleapis.com/css2?${params.toString()}`;
+}
+
+/* Metadata */
+export const metadata: Metadata = {
+    metadataBase: new URL("https://event-maker.sa"),
+
+    title: {
+        default: "Event Maker",
+        template: "%s | Event Maker",
+    },
+};
+
+export function generateStaticParams() {
+    return locales.map((locale) => ({ locale }));
+}
+
+interface LocaleLayoutProps {
+    children: React.ReactNode;
+    params: Promise<{ locale: string; }>;
+}
+
+/* Locale Layout */
+export default async function LocaleLayout({ children, params, }: LocaleLayoutProps) {
+    const { locale } = await params;
+
+    if (!locales.includes(locale as Locale)) {
+        notFound();
+    }
+
+    const currentLocale = locale as Locale;
+    const isArabic = currentLocale === "ar";
+
+    /* Global Website Data */
+    const [homepageSettings, services, contactSettings, socialSettings, today,] = await Promise.all([getHomepageSettings(), getServices(), getContactSettings(), getSocialSettings(), getTodayDate(),]);
+    const currentYear = Number(today.slice(0, 4));
+    /* Active Theme */
+    const theme = await getActiveTheme(homepageSettings);
+
+    /* Google Fonts */
+    const googleFontsUrl = getGoogleFontsUrl(theme.arabicFont, theme.englishFont);
+
+    /* Theme Variables */
+    const themeStyles = {
+        "--theme-primary": theme.primaryColor,
+        "--theme-secondary": theme.secondaryColor,
+        "--theme-background": theme.backgroundColor,
+        "--theme-text": theme.textColor,
+        "--theme-font-ar": `"${theme.arabicFont}"`,
+        "--theme-font-en": `"${theme.englishFont}"`,
+    } as CSSProperties;
+
+    return (
+        <html lang={isArabic ? "ar" : "en"} dir={isArabic ? "rtl" : "ltr"} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} >
+            <head>
+                <link rel="preconnect" href="https://fonts.googleapis.com" />
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+                <link rel="stylesheet" href={googleFontsUrl} />
+            </head>
+
+            <body className="min-h-full flex flex-col" style={themeStyles} >
+                <Suspense fallback={<div className="h-20" aria-hidden="true" />}>
+                    <Navbar locale={currentLocale} />
+                </Suspense>
+
+                {children}
+
+                <Footer locale={currentLocale} contact={contactSettings} socials={socialSettings} services={services} currentYear={currentYear} />
+                
+                <WhatsappIcon
+                    locale={currentLocale}
+                    contact={contactSettings}
+                />
+
+                <CookieConsent locale={currentLocale} />
+            </body>
+        </html>
+    );
+}
+
+
+==================================================
+FILE: app/[locale]/page.tsx
+==================================================
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import CompanyHome from "@/components/home/CompanyHome";
+import ExhibitionLanding from "@/components/home/ExhibitionLanding";
+
+import {
+    getHomepageData,
+    getHomeSEO,
+} from "@/lib/data/homepage";
+
+import {
+    locales,
+    type Locale,
+} from "@/lib/i18n/config";
+
+interface HomePageProps {
+    params: Promise<{
+        locale: string;
+    }>;
+}
+
+const SITE_URL = "https://event-maker.sa";
+
+/* Metadata */
+export async function generateMetadata({ params, }: HomePageProps): Promise<Metadata> {
+    const { locale } = await params;
+
+    if (!locales.includes(locale as Locale)) {
+        return {};
+    }
+
+    const currentLocale = locale as Locale;
+    const isArabic = currentLocale === "ar";
+
+    const canonicalUrl = isArabic
+        ? `${SITE_URL}/`
+        : `${SITE_URL}/en`;
+
+    const homepage = await getHomepageData();
+
+    let title: string | undefined;
+    let description: string | undefined;
+    let keywords: string | undefined;
+
+    if (homepage.mode === "company") {
+        const seo = await getHomeSEO();
+
+        if (seo) {
+            title = seo.title[currentLocale];
+            description = seo.description[currentLocale];
+
+            const localizedKeywords = seo.keywords?.[currentLocale];
+
+            if (localizedKeywords?.trim()) {
+                keywords = localizedKeywords.trim();
+            }
+        }
+    } else {
+        const exhibition = homepage.exhibition;
+
+        if (exhibition) {
+            title = exhibition.title[currentLocale];
+            description = exhibition.description[currentLocale];
+        }
+    }
+
+    return {
+        ...(title?.trim() && {
+            title: title.trim(),
+        }),
+
+        ...(description?.trim() && {
+            description: description.trim(),
+        }),
+
+        ...(keywords && {
+            keywords,
+        }),
+
+        alternates: {
+            canonical: canonicalUrl,
+            languages: {
+                ar: `${SITE_URL}/`,
+                en: `${SITE_URL}/en`,
+                "x-default": `${SITE_URL}/`,
+            },
+        },
+
+        openGraph: {
+            type: "website",
+            url: canonicalUrl,
+            ...(title?.trim() && {
+                title: title.trim(),
+            }),
+            ...(description?.trim() && {
+                description: description.trim(),
+            }),
+            locale: isArabic ? "ar" : "en",
+            alternateLocale: isArabic ? ["en"] : ["ar"],
+        },
+
+        twitter: {
+            card: "summary_large_image",
+            ...(title?.trim() && {
+                title: title.trim(),
+            }),
+            ...(description?.trim() && {
+                description: description.trim(),
+            }),
+        },
+    };
+}
+
+/* Homepage */
+export default async function HomePage({
+    params,
+}: HomePageProps) {
+
+    const { locale } = await params;
+
+    if (!locales.includes(locale as Locale)) {
+        notFound();
+    }
+
+    const currentLocale = locale as Locale;
+    const homepage = await getHomepageData();
+
+    if (
+        homepage.mode === "exhibition" &&
+        homepage.exhibition
+    ) {
+        return (
+            <ExhibitionLanding
+                locale={currentLocale}
+                exhibition={homepage.exhibition}
+            />
+        );
+    }
+
+    return (
+        <CompanyHome locale={currentLocale} />
+    );
+}
+
+==================================================
+FILE: app/api/contact/route.ts
+==================================================
+// app\api\contact\route.ts
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebase/admin";
+import { contactFormSchema } from "@/lib/validations/contact";
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+
+        const result = contactFormSchema.safeParse(body);
+
+        if (!result.success) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: "Invalid form data.",
+                    errors: result.error.flatten()
+                        .fieldErrors,
+                },
+                { status: 400 }
+            );
+        }
+
+        const {
+            name,
+            email,
+            phone,
+            brandName,
+            message,
+            locale,
+        } = result.data;
+
+        const docRef = await adminDb
+            .collection("contact_submissions")
+            .add({
+                name,
+                email,
+                phone,
+                brandName: brandName || "",
+                message,
+                locale,
+                status: "new",
+                createdAt:
+                    new Date(),
+            });
+
+        return NextResponse.json(
+            {
+                success: true,
+                id: docRef.id,
+            },
+            { status: 201 }
+        );
+    } catch (error) {
+        console.error(
+            "Contact form submission error:",
+            error
+        );
+
+        return NextResponse.json(
+            {
+                success: false,
+                message:
+                    "Something went wrong while submitting the form.",
+            },
+            { status: 500 }
+        );
+    }
+}
+
+==================================================
+FILE: app/api/registrations/route.ts
+==================================================
+// app\api\registrations\route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
+import {
+    createCipheriv,
+    createDecipheriv,
+    createHash,
+    randomBytes,
+} from "node:crypto";
+
+import { adminDb } from "@/lib/firebase/admin";
+import { sendEmail } from "@/lib/email/mailer";
+import type { Locale } from "@/lib/i18n/config";
+
+import {
+    createVisitorRegistrationSchema,
+    createExhibitorRegistrationSchema,
+} from "@/lib/validations/registration";
+
+const REGISTRATIONS_COLLECTION = "exhibition_registrations";
+const EXHIBITIONS_COLLECTION = "exhibitions";
+const VERIFICATIONS_COLLECTION = "registration_email_verifications";
+const OUTBOX_COLLECTION = "email_outbox";
+
+const VERIFICATION_EXPIRY_MINUTES = 30;
+
+type RegistrationType = "visitor" | "exhibitor";
+
+function getErrorMessage(
+    locale: Locale,
+    type: "invalid" | "notFound" | "inactive" | "server",
+) {
+    const messages = {
+        ar: {
+            invalid: "Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø±Ø³Ù„Ø© ØºÙŠØ± ØµØ­ÙŠØ­Ø©.",
+            notFound: "Ø§Ù„Ù…Ø¹Ø±Ø¶ Ø§Ù„Ù…Ø·Ù„ÙˆØ¨ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯.",
+            inactive: "Ø§Ù„ØªØ³Ø¬ÙŠÙ„ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø¹Ø±Ø¶ ØºÙŠØ± Ù…ØªØ§Ø­ Ø­Ø§Ù„ÙŠÙ‹Ø§.",
+            server: "Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„. Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰.",
+        },
+        en: {
+            invalid: "The submitted data is invalid.",
+            notFound: "The requested exhibition was not found.",
+            inactive: "Registration for this exhibition is currently unavailable.",
+            server: "An error occurred while submitting your registration. Please try again.",
+        },
+    };
+
+    return messages[locale][type];
+}
+
+function escapeHtml(value: string) {
+    return value.replace(/[&<>"']/g, (character) => {
+        const entities: Record<string, string> = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        };
+
+        return entities[character];
+    });
+}
+
+function getLocalizedText(value: unknown, locale: Locale): string {
+    if (typeof value === "string") return value;
+
+    if (value && typeof value === "object") {
+        const localized = value as Record<string, unknown>;
+        const result = localized[locale] ?? localized.ar ?? localized.en;
+
+        return typeof result === "string" ? result : "";
+    }
+
+    return "";
+}
+
+/**
+ * ØªØ´ÙÙŠØ± Ø±Ù…Ø² Ø§Ù„ØªØ­Ù‚Ù‚ Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… AES-256-GCM.
+ * Ù†Ø³ØªØ®Ø¯Ù… TICKET_ENCRYPTION_KEY Ø§Ù„Ø­Ø§Ù„ÙŠ Ù„ØªØ¬Ù†Ø¨ Ø¥Ø¶Ø§ÙØ© Ù…ØªØºÙŠØ± Ø¨ÙŠØ¦Ø© Ø¬Ø¯ÙŠØ¯.
+ */
+function encryptVerificationToken(token: string): string {
+    const secret = process.env.TICKET_ENCRYPTION_KEY;
+
+    if (!secret || !/^[a-f0-9]{64}$/i.test(secret)) {
+        throw new Error(
+            "TICKET_ENCRYPTION_KEY must be a 64-character hexadecimal key.",
+        );
+    }
+
+    const key = Buffer.from(secret, "hex");
+    const iv = randomBytes(12);
+
+    const cipher = createCipheriv("aes-256-gcm", key, iv);
+
+    const encrypted = Buffer.concat([
+        cipher.update(token, "utf8"),
+        cipher.final(),
+    ]);
+
+    return [
+        iv.toString("hex"),
+        cipher.getAuthTag().toString("hex"),
+        encrypted.toString("hex"),
+    ].join(":");
+}
+
+/**
+ * ÙÙƒ ØªØ´ÙÙŠØ± Ø±Ù…Ø² Ø§Ù„ØªØ­Ù‚Ù‚.
+ */
+function decryptVerificationToken(encryptedToken: string): string {
+    const secret = process.env.TICKET_ENCRYPTION_KEY;
+
+    if (!secret || !/^[a-f0-9]{64}$/i.test(secret)) {
+        throw new Error(
+            "TICKET_ENCRYPTION_KEY must be a 64-character hexadecimal key.",
+        );
+    }
+
+    const parts = encryptedToken.split(":");
+
+    if (parts.length !== 3) {
+        throw new Error("Invalid encrypted verification token.");
+    }
+
+    const [ivHex, authTagHex, encryptedHex] = parts;
+
+    if (
+        !/^[a-f0-9]{24}$/i.test(ivHex) ||
+        !/^[a-f0-9]{32}$/i.test(authTagHex) ||
+        !/^[a-f0-9]+$/i.test(encryptedHex)
+    ) {
+        throw new Error("Invalid encrypted verification token format.");
+    }
+
+    const key = Buffer.from(secret, "hex");
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
+    const encrypted = Buffer.from(encryptedHex, "hex");
+
+    const decipher = createDecipheriv("aes-256-gcm", key, iv);
+
+    decipher.setAuthTag(authTag);
+
+    return Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+    ]).toString("utf8");
+}
+
+function hashToken(token: string) {
+    return createHash("sha256")
+        .update(token)
+        .digest("hex");
+}
+
+/**
+ * Ø¥Ø±Ø³Ø§Ù„ Ø±Ø³Ø§Ù„Ø© Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø®Ù„Ø§Ù„ Outbox.
+ */
+async function processVerificationEmail(registrationId: string) {
+    const jobId = `${registrationId}_verification_email`;
+
+    const jobRef = adminDb
+        .collection(OUTBOX_COLLECTION)
+        .doc(jobId);
+
+    // Ø­Ø¬Ø² Ø§Ù„Ù…Ù‡Ù…Ø© Ù„Ù…Ù†Ø¹ ØªÙ†ÙÙŠØ°Ù‡Ø§ Ø¨Ø§Ù„ØªØ²Ø§Ù…Ù† Ù…Ø±ØªÙŠÙ†.
+    const claimed = await adminDb.runTransaction(async (transaction) => {
+        const jobDoc = await transaction.get(jobRef);
+
+        if (!jobDoc.exists) {
+            return false;
+        }
+
+        const jobData = jobDoc.data();
+
+        if (
+            !jobData ||
+            jobData.type !== "verification_email" ||
+            jobData.status !== "pending"
+        ) {
+            return false;
+        }
+
+        transaction.update(jobRef, {
+            status: "sending",
+            attempts: FieldValue.increment(1),
+            startedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return true;
+    });
+
+    if (!claimed) {
+        return;
+    }
+
+    try {
+        const [jobDoc, registrationDoc] = await Promise.all([
+            jobRef.get(),
+            adminDb
+                .collection(REGISTRATIONS_COLLECTION)
+                .doc(registrationId)
+                .get(),
+        ]);
+
+        const jobData = jobDoc.data();
+        const registrationData = registrationDoc.data();
+
+        if (!jobData || !registrationData) {
+            throw new Error("Verification job or registration not found.");
+        }
+
+        const recipient = jobData.recipient;
+
+        if (
+            typeof recipient !== "string" ||
+            !recipient.trim()
+        ) {
+            throw new Error("Verification email recipient is missing.");
+        }
+
+        if (typeof jobData.encryptedToken !== "string") {
+            throw new Error("Encrypted verification token is missing.");
+        }
+
+        if (typeof jobData.siteUrl !== "string") {
+            throw new Error("Verification site URL is missing.");
+        }
+
+        const token = decryptVerificationToken(jobData.encryptedToken);
+
+        const verificationUrl = new URL(
+            "/api/registrations/verify",
+            jobData.siteUrl,
+        );
+
+        verificationUrl.searchParams.set("token", token);
+
+        const locale: Locale =
+            registrationData.locale === "en" ? "en" : "ar";
+
+        const personName =
+            typeof registrationData.data?.name === "string"
+                ? registrationData.data.name
+                : "";
+
+        const exhibitionName = getLocalizedText(
+            registrationData.exhibition?.title,
+            locale,
+        );
+
+        const safePersonName = escapeHtml(personName);
+        const safeExhibitionName = escapeHtml(exhibitionName);
+        const verificationLink = escapeHtml(verificationUrl.toString());
+
+        const subject =
+            locale === "ar"
+                ? "ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ - Event Maker"
+                : "Verify your email - Event Maker";
+
+        const html =
+            locale === "ar"
+                ? `
+                    <div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#222;line-height:1.8">
+                        <h2 style="color:#1677b8">Ù…Ø±Ø­Ø¨Ù‹Ø§ ${safePersonName}</h2>
+                        <p>Ø´ÙƒØ±Ù‹Ø§ Ù„ØªØ³Ø¬ÙŠÙ„ Ø§Ù‡ØªÙ…Ø§Ù…Ùƒ ÙÙŠ Ù…Ø¹Ø±Ø¶ <strong>${safeExhibitionName}</strong>.</p>
+                        <p>Ù„ØªØ£ÙƒÙŠØ¯ Ù…Ù„ÙƒÙŠØªÙƒ Ù„Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØ¥ÙƒÙ…Ø§Ù„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ØŒ Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø²Ø± Ø§Ù„ØªØ§Ù„ÙŠ:</p>
+                        <p style="margin:30px 0">
+                            <a href="${verificationLink}" style="background:#1677b8;color:#fff;text-decoration:none;padding:13px 24px;border-radius:6px;display:inline-block">
+                                ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ
+                            </a>
+                        </p>
+                        <p>ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ø±Ø§Ø¨Ø· ${VERIFICATION_EXPIRY_MINUTES} Ø¯Ù‚ÙŠÙ‚Ø©ØŒ ÙˆÙŠÙ…ÙƒÙ† Ø§Ø³ØªØ®Ø¯Ø§Ù…Ù‡ Ù…Ø±Ø© ÙˆØ§Ø­Ø¯Ø© ÙÙ‚Ø·.</p>
+                        <p>Ø¥Ø°Ø§ Ù„Ù… ØªÙ‚Ù… Ø¨Ù‡Ø°Ø§ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ØŒ ÙŠÙ…ÙƒÙ†Ùƒ ØªØ¬Ø§Ù‡Ù„ Ø§Ù„Ø±Ø³Ø§Ù„Ø©.</p>
+                        <p>ÙØ±ÙŠÙ‚ Event Maker</p>
+                    </div>
+                `
+                : `
+                    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:24px;color:#222;line-height:1.8">
+                        <h2 style="color:#1677b8">Hello ${safePersonName}</h2>
+                        <p>Thank you for registering your interest in <strong>${safeExhibitionName}</strong>.</p>
+                        <p>Please verify your email address to complete your registration:</p>
+                        <p style="margin:30px 0">
+                            <a href="${verificationLink}" style="background:#1677b8;color:#fff;text-decoration:none;padding:13px 24px;border-radius:6px;display:inline-block">
+                                Verify Email Address
+                            </a>
+                        </p>
+                        <p>This link expires in ${VERIFICATION_EXPIRY_MINUTES} minutes and can only be used once.</p>
+                        <p>If you did not submit this registration, you can ignore this email.</p>
+                        <p>Event Maker Team</p>
+                    </div>
+                `;
+
+        const text =
+            locale === "ar"
+                ? `Ù…Ø±Ø­Ø¨Ù‹Ø§ ${personName}ØŒ Ù„ØªØ£ÙƒÙŠØ¯ Ø¨Ø±ÙŠØ¯Ùƒ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØ¥ÙƒÙ…Ø§Ù„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ ÙÙŠ Ù…Ø¹Ø±Ø¶ ${exhibitionName}ØŒ Ø§ÙØªØ­ Ø§Ù„Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ§Ù„ÙŠ: ${verificationUrl.toString()} . Ø§Ù„Ø±Ø§Ø¨Ø· ØµØ§Ù„Ø­ Ù„Ù…Ø¯Ø© ${VERIFICATION_EXPIRY_MINUTES} Ø¯Ù‚ÙŠÙ‚Ø© ÙˆÙŠØ³ØªØ®Ø¯Ù… Ù…Ø±Ø© ÙˆØ§Ø­Ø¯Ø©.`
+                : `Hello ${personName}, verify your email to complete your registration for ${exhibitionName}: ${verificationUrl.toString()}. This link expires in ${VERIFICATION_EXPIRY_MINUTES} minutes and can only be used once.`;
+
+        await sendEmail({
+            to: recipient,
+            subject,
+            text,
+            html,
+        });
+
+        await jobRef.update({
+            status: "sent",
+            sentAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            lastError: FieldValue.delete(),
+            encryptedToken: FieldValue.delete(),
+        });
+
+        await adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc(registrationId)
+            .update({
+                emailStatus: "verification_sent",
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+    } catch (error) {
+        console.error(
+            `Verification email error (${jobId}):`,
+            error,
+        );
+
+        const errorMessage =
+            error instanceof Error
+                ? error.message.slice(0, 500)
+                : "Unknown verification email error.";
+
+        await jobRef.update({
+            status: "needs_review",
+            lastError: errorMessage,
+            failedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        await adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc(registrationId)
+            .update({
+                emailStatus: "verification_needs_review",
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+    }
+}
+
+export async function POST(request: NextRequest) {
+    let locale: Locale = "ar";
+
+    try {
+        const contentLength = Number(
+            request.headers.get("content-length") ?? 0,
+        );
+
+        if (contentLength > 30_000) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "invalid"),
+                },
+                { status: 413 },
+            );
+        }
+
+        const body: unknown = await request.json();
+
+        if (!body || typeof body !== "object" || Array.isArray(body)) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "invalid"),
+                },
+                { status: 400 },
+            );
+        }
+
+        const payload = body as Record<string, unknown>;
+
+        if (payload.locale === "ar" || payload.locale === "en") {
+            locale = payload.locale;
+        }
+
+        const { registrationType, exhibitionId, data } = payload;
+
+        if (
+            (registrationType !== "visitor" &&
+                registrationType !== "exhibitor") ||
+            typeof exhibitionId !== "string" ||
+            !exhibitionId.trim() ||
+            exhibitionId.length > 150 ||
+            !data ||
+            typeof data !== "object" ||
+            Array.isArray(data)
+        ) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "invalid"),
+                },
+                { status: 400 },
+            );
+        }
+
+        const typedRegistrationType = registrationType as RegistrationType;
+
+        const schema =
+            typedRegistrationType === "visitor"
+                ? createVisitorRegistrationSchema(locale)
+                : createExhibitorRegistrationSchema(locale);
+
+        const validation = schema.safeParse(data);
+
+        if (!validation.success) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "invalid"),
+                    errors: validation.error.flatten().fieldErrors,
+                },
+                { status: 400 },
+            );
+        }
+
+        // Ø§Ù„ØªØ£ÙƒØ¯ Ù…Ù† Ø¥Ø¹Ø¯Ø§Ø¯ Ø±Ø§Ø¨Ø· Ø§Ù„Ù…ÙˆÙ‚Ø¹ Ù‚Ø¨Ù„ Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„ØªØ³Ø¬ÙŠÙ„.
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+        if (!siteUrl) {
+            throw new Error("NEXT_PUBLIC_SITE_URL is missing.");
+        }
+
+        const parsedSiteUrl = new URL(siteUrl);
+
+        if (
+            parsedSiteUrl.protocol !== "https:" &&
+            parsedSiteUrl.protocol !== "http:"
+        ) {
+            throw new Error("NEXT_PUBLIC_SITE_URL must use HTTP or HTTPS.");
+        }
+
+        // Ø¬Ù„Ø¨ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø¹Ø±Ø¶.
+        const exhibitionRef = adminDb
+            .collection(EXHIBITIONS_COLLECTION)
+            .doc(exhibitionId);
+
+        const exhibitionDoc = await exhibitionRef.get();
+
+        if (!exhibitionDoc.exists) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "notFound"),
+                },
+                { status: 404 },
+            );
+        }
+
+        const exhibitionData = exhibitionDoc.data();
+
+        if (!exhibitionData || exhibitionData.is_active === false) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    message: getErrorMessage(locale, "inactive"),
+                },
+                { status: 403 },
+            );
+        }
+
+        const exhibitionSnapshot = {
+            id: exhibitionDoc.id,
+            slug: exhibitionData.slug ?? "",
+            title: exhibitionData.title ?? { ar: "", en: "" },
+            series_id: exhibitionData.series_id ?? "",
+            version: exhibitionData.version ?? "",
+            start_date: exhibitionData.start_date ?? "",
+            end_date: exhibitionData.end_date ?? "",
+            location: exhibitionData.location ?? null,
+        };
+
+        // Ø¥Ù†Ø´Ø§Ø¡ Ù…Ø¹Ø±Ù Ø§Ù„ØªØ³Ø¬ÙŠÙ„.
+        const registrationRef = adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc();
+
+        // Ø¥Ù†Ø´Ø§Ø¡ Ø±Ù…Ø² Ø§Ù„ØªØ­Ù‚Ù‚ ÙˆØªØ®Ø²ÙŠÙ† Hash ÙÙ‚Ø· ÙÙŠ Ù…Ø³ØªÙ†Ø¯ Ø§Ù„ØªØ­Ù‚Ù‚.
+        const token = randomBytes(32).toString("hex");
+
+        const tokenHash = hashToken(token);
+        const encryptedToken = encryptVerificationToken(token);
+
+        const verificationRef = adminDb
+            .collection(VERIFICATIONS_COLLECTION)
+            .doc(tokenHash);
+
+        const verificationJobRef = adminDb
+            .collection(OUTBOX_COLLECTION)
+            .doc(`${registrationRef.id}_verification_email`);
+
+        const recipientEmail = validation.data.email.trim();
+
+        // Ø­ÙØ¸ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ ÙˆØ§Ù„ØªØ­Ù‚Ù‚ ÙˆÙ…Ù‡Ù…Ø© Ø§Ù„Ø¨Ø±ÙŠØ¯ ÙÙŠ Transaction ÙˆØ§Ø­Ø¯Ø©.
+        await adminDb.runTransaction(async (transaction) => {
+            transaction.set(registrationRef, {
+                registrationType: typedRegistrationType,
+                exhibition: exhibitionSnapshot,
+                locale,
+                data: validation.data,
+                status: "pending_verification",
+                emailVerified: false,
+                emailStatus: "verification_pending",
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            transaction.set(verificationRef, {
+                registrationId: registrationRef.id,
+                expiresAt: Timestamp.fromDate(
+                    new Date(
+                        Date.now() +
+                            VERIFICATION_EXPIRY_MINUTES * 60 * 1000,
+                    ),
+                ),
+                usedAt: null,
+                createdAt: FieldValue.serverTimestamp(),
+            });
+
+            transaction.set(verificationJobRef, {
+                registrationId: registrationRef.id,
+                type: "verification_email",
+                recipient: recipientEmail,
+                encryptedToken,
+                siteUrl: parsedSiteUrl.origin,
+                status: "pending",
+                attempts: 0,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        });
+
+        // Ù…Ø­Ø§ÙˆÙ„Ø© Ø§Ù„Ø¥Ø±Ø³Ø§Ù„ ÙÙˆØ±Ù‹Ø§ØŒ Ù…Ø¹ Ø§Ù„Ø§Ø­ØªÙØ§Ø¸ Ø¨Ø§Ù„Ù…Ù‡Ù…Ø© ÙÙŠ Outbox.
+        await processVerificationEmail(registrationRef.id);
+
+        return NextResponse.json(
+            {
+                success: true,
+                message:
+                    locale === "ar"
+                        ? "ØªÙ… Ø§Ø³ØªÙ„Ø§Ù… Ø¨ÙŠØ§Ù†Ø§ØªÙƒ. ØªØ­Ù‚Ù‚ Ù…Ù† Ø¨Ø±ÙŠØ¯Ùƒ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØ§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ£ÙƒÙŠØ¯ Ù„Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„."
+                        : "Your details have been received. Check your email and click the verification link to complete your registration.",
+            },
+            { status: 201 },
+        );
+    } catch (error) {
+        console.error("Registration API error:", error);
+
+        return NextResponse.json(
+            {
+                success: false,
+                message: getErrorMessage(locale, "server"),
+            },
+            { status: 500 },
+        );
+    }
+}
+
+==================================================
+FILE: app/api/registrations/verify/route.ts
+==================================================
+// app/api/registrations/verify/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import {
+    createCipheriv,
+    createDecipheriv,
+    createHash,
+    randomBytes,
+} from "node:crypto";
+import { FieldValue } from "firebase-admin/firestore";
+
+import { adminDb } from "@/lib/firebase/admin";
+import { sendEmail } from "@/lib/email/mailer";
+import {
+    createRegistrationEmail,
+    createAdminRegistrationBatchEmail,
+} from "@/lib/email/registration-templates";
+import { generateVisitorQrCode } from "@/lib/qr/visitor-ticket";
+
+import type { Locale } from "@/lib/i18n/config";
+
+const VERIFICATIONS_COLLECTION = "registration_email_verifications";
+const REGISTRATIONS_COLLECTION = "exhibition_registrations";
+const TICKETS_COLLECTION = "visitor_tickets";
+const OUTBOX_COLLECTION = "email_outbox";
+
+const ADMIN_BATCH_STATE_COLLECTION = "admin_notification_batches";
+const ADMIN_BATCH_STATE_ID = "state";
+
+const ADMIN_BATCH_SIZE = 100;
+
+type VerificationResult =
+    | {
+        status: "success";
+        registrationId: string;
+        adminBatchId?: string;
+    }
+    | {
+        status: "already_confirmed";
+        registrationId: string;
+    }
+    | {
+        status: "already_processed";
+        registrationId?: string;
+    }
+    | { status: "expired" }
+    | { status: "invalid" };
+
+type RegistrationEmailDetails = {
+    registrationId: string;
+    registrationType: "visitor" | "exhibitor";
+    locale: Locale;
+    data: Record<string, unknown>;
+    exhibition: {
+        title: unknown;
+        start_date: unknown;
+        end_date: unknown;
+        location: unknown;
+    };
+};
+
+function escapeHtml(value: string) {
+    return value.replace(/[&<>"']/g, (character) => {
+        const entities: Record<string, string> = {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        };
+
+        return entities[character];
+    });
+}
+
+function verificationPage(
+    title: string,
+    message: string,
+    success: boolean,
+    token?: string,
+) {
+    const color = success ? "#16834a" : "#c0392b";
+
+    const confirmButton = token
+        ? `
+            <form method="POST" action="/api/registrations/verify"
+                onsubmit='
+                    const button = this.querySelector("button");
+                    if (!button || button.disabled) {return false;}
+                    button.disabled = true;
+                    button.setAttribute("aria-busy", "true");
+                    button.textContent = "Ø¬Ø§Ø±ÙŠ ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ...";
+                    button.style.opacity = "0.6";
+                    button.style.cursor = "not-allowed";
+                    return true;
+                '
+            >
+                <input
+                    type="hidden"
+                    name="token"
+                    value="${escapeHtml(token)}"
+                />
+                <button
+                    type="submit"
+                    style="background:#1677b8;color:#fff;border:0;padding:14px 28px;border-radius:6px;font-size:16px;cursor:pointer"
+                >
+                    ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ
+                </button>
+            </form>
+        `
+        : "";
+
+    return new NextResponse(
+        `<!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <meta name="robots" content="noindex,nofollow" />
+                <title>${escapeHtml(title)} | Event Maker</title>
+            </head>
+            <body style="margin:0;background:#f5f7fa;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;box-sizing:border-box">
+                <main style="background:#fff;max-width:480px;width:100%;padding:40px 28px;border-radius:12px;text-align:center;box-shadow:0 5px 25px rgba(0,0,0,.07)">
+                    <h1 style="color:${color};font-size:25px">${escapeHtml(title)}</h1>
+                    <p style="color:#555;line-height:1.9">${escapeHtml(message)}</p>
+                    ${confirmButton}
+                    <p style="margin-top:30px;color:#777;font-size:14px">Event Maker</p>
+                </main>
+            </body>
+        </html>`,
+        {
+            status: 200,
+            headers: {
+                "Content-Type": "text/html; charset=utf-8",
+                "Cache-Control": "no-store",
+                "X-Robots-Tag": "noindex, nofollow",
+            },
+        },
+    );
+}
+
+/**
+ * ØªØ´ÙÙŠØ± Ø±Ù…Ø² Ø§Ù„ØªØ°ÙƒØ±Ø© Ø¨Ø§Ø³ØªØ®Ø¯Ø§Ù… AES-256-GCM.
+ * Ø§Ù„Ù…ÙØªØ§Ø­ ÙŠØ¬Ø¨ Ø£Ù† ÙŠÙƒÙˆÙ† 64 Ø®Ø§Ù†Ø© Hex = 32 bytes.
+ */
+function encryptTicketToken(token: string): string {
+    const secret = process.env.TICKET_ENCRYPTION_KEY;
+
+    if (!secret || !/^[a-f0-9]{64}$/i.test(secret)) {
+        throw new Error(
+            "TICKET_ENCRYPTION_KEY must be a 64-character hexadecimal key.",
+        );
+    }
+
+    const key = Buffer.from(secret, "hex");
+    const iv = randomBytes(12);
+
+    const cipher = createCipheriv("aes-256-gcm", key, iv);
+
+    const encrypted = Buffer.concat([
+        cipher.update(token, "utf8"),
+        cipher.final(),
+    ]);
+
+    const authTag = cipher.getAuthTag();
+
+    return [
+        iv.toString("hex"),
+        authTag.toString("hex"),
+        encrypted.toString("hex"),
+    ].join(":");
+}
+
+function decryptTicketToken(encryptedToken: string): string {
+    const secret = process.env.TICKET_ENCRYPTION_KEY;
+
+    if (!secret || !/^[a-f0-9]{64}$/i.test(secret)) {
+        throw new Error(
+            "TICKET_ENCRYPTION_KEY must be a 64-character hexadecimal key.",
+        );
+    }
+
+    const parts = encryptedToken.split(":");
+
+    if (parts.length !== 3) {
+        throw new Error("Invalid encrypted ticket token.");
+    }
+
+    const [ivHex, authTagHex, encryptedHex] = parts;
+
+    const key = Buffer.from(secret, "hex");
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
+    const encrypted = Buffer.from(encryptedHex, "hex");
+
+    const decipher = createDecipheriv("aes-256-gcm", key, iv);
+
+    decipher.setAuthTag(authTag);
+
+    return Buffer.concat([
+        decipher.update(encrypted),
+        decipher.final(),
+    ]).toString("utf8");
+}
+
+function hashToken(token: string) {
+    return createHash("sha256")
+        .update(token)
+        .digest("hex");
+}
+
+/**
+ * ØªØ­ÙˆÙŠÙ„ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ³Ø¬ÙŠÙ„ Ø¥Ù„Ù‰ Ø§Ù„Ø´ÙƒÙ„ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù… ÙÙŠ Ù‚ÙˆØ§Ù„Ø¨ Ø§Ù„Ø¨Ø±ÙŠØ¯.
+ */
+function getRegistrationEmailDetails(
+    registrationId: string,
+    registrationData: FirebaseFirestore.DocumentData,
+): RegistrationEmailDetails {
+    const registrationType = registrationData.registrationType;
+
+    if (
+        registrationType !== "visitor" &&
+        registrationType !== "exhibitor"
+    ) {
+        throw new Error("Invalid registration type.");
+    }
+
+    return {
+        registrationId,
+        registrationType,
+        locale: registrationData.locale === "en" ? "en" : "ar",
+        data: registrationData.data ?? {},
+        exhibition: {
+            title: registrationData.exhibition?.title ?? {},
+            start_date: registrationData.exhibition?.start_date ?? "",
+            end_date: registrationData.exhibition?.end_date ?? "",
+            location: registrationData.exhibition?.location ?? null,
+        },
+    };
+}
+
+async function verifyToken(token: string): Promise<VerificationResult> {
+    const tokenHash = hashToken(token);
+
+    const verificationRef = adminDb
+        .collection(VERIFICATIONS_COLLECTION)
+        .doc(tokenHash);
+
+    const batchStateRef = adminDb
+        .collection(ADMIN_BATCH_STATE_COLLECTION)
+        .doc(ADMIN_BATCH_STATE_ID);
+
+    return adminDb.runTransaction(async (transaction) => {
+        // 1. Ù‚Ø±Ø§Ø¡Ø© Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ­Ù‚Ù‚.
+        const verificationDoc = await transaction.get(verificationRef);
+
+        if (!verificationDoc.exists) return { status: "invalid" };
+
+        const verificationData = verificationDoc.data();
+
+        if (!verificationData) return { status: "invalid" };
+
+        const registrationId = verificationData.registrationId;
+
+        if (typeof registrationId !== "string" || !registrationId) {
+            return { status: "invalid" };
+        }
+
+        if (!verificationData.expiresAt || typeof verificationData.expiresAt.toMillis !== "function" || verificationData.expiresAt.toMillis() <= Date.now()) {
+            return { status: "expired" };
+        }
+
+        // 2. Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„ØªØ³Ø¬ÙŠÙ„.
+        const registrationRef = adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc(registrationId);
+
+        const registrationDoc = await transaction.get(registrationRef);
+
+        if (!registrationDoc.exists) {
+            return { status: "invalid" };
+        }
+
+        const registrationData = registrationDoc.data();
+
+        if (!registrationData) {
+            return { status: "invalid" };
+        }
+
+        // 3. Ø§Ù„ØªØ¹Ø§Ù…Ù„ Ù…Ø¹ Ø·Ù„Ø¨Ø§Øª Ø§Ù„ØªØ­Ù‚Ù‚ Ø§Ù„Ù…ÙƒØ±Ø±Ø©.
+        // Ù„Ùˆ Ø§Ù„ØªØ³Ø¬ÙŠÙ„ Ø§ØªØ£ÙƒØ¯ Ø¨Ø§Ù„ÙØ¹Ù„ØŒ Ù†Ø±Ø¬Ø¹ Ù†Ø¬Ø§Ø­ Ø¨Ø¯Ù„ Ø±Ø³Ø§Ù„Ø© Ø®Ø·Ø£.
+        if (verificationData.usedAt || registrationData.status === "confirmed") {
+            return {
+                status: "already_confirmed",
+                registrationId,
+            };
+        }
+
+        // Ø£ÙŠ Ø­Ø§Ù„Ø© Ø£Ø®Ø±Ù‰ ØºÙŠØ± pending_verification Ù„Ø§ ÙŠØªÙ… Ù…Ø¹Ø§Ù„Ø¬ØªÙ‡Ø§.
+        if (registrationData.status !== "pending_verification") {
+            return {
+                status: "already_processed",
+                registrationId,
+            };
+        }
+
+        const registrationType = registrationData.registrationType;
+        if (registrationType !== "visitor" && registrationType !== "exhibitor") return { status: "invalid" };
+
+        // 4. Ù‚Ø±Ø§Ø¡Ø© Ù…Ù‡Ù…Ø© ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…Ø³Ø¬Ù„.
+        const registrantJobRef = adminDb
+            .collection(OUTBOX_COLLECTION)
+            .doc(`${registrationId}_registrant_confirmation`);
+
+        const registrantJobDoc = await transaction.get(registrantJobRef);
+
+        // 5. Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„ØªØ°ÙƒØ±Ø© Ø³ÙˆØ§Ø¡ ÙƒØ§Ù† Ø§Ù„ØªØ³Ø¬ÙŠÙ„ Ø²Ø§Ø¦Ø±Ù‹Ø§ Ø£Ùˆ Ø¹Ø§Ø±Ø¶Ù‹Ø§.
+        const ticketRef = adminDb
+            .collection(TICKETS_COLLECTION)
+            .doc(registrationId);
+
+        const ticketDoc = await transaction.get(ticketRef);
+
+        // 6. Ù‚Ø±Ø§Ø¡Ø© Ø­Ø§Ù„Ø© ØªØ¬Ù…ÙŠØ¹ Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.
+        const batchStateDoc = await transaction.get(batchStateRef);
+        const batchStateData = batchStateDoc.data();
+
+        const currentRegistrationIds: string[] =
+            Array.isArray(batchStateData?.registrationIds) ? batchStateData.registrationIds.filter((id: unknown): id is string => typeof id === "string",) : [];
+
+        const currentBatchNumber = typeof batchStateData?.batchNumber === "number" ? batchStateData.batchNumber : 0;
+
+        // 7. ØªØ¬Ù‡ÙŠØ² Ø±Ù…Ø² Ø§Ù„ØªØ°ÙƒØ±Ø© Ø¥Ø°Ø§ Ù„Ù… ØªÙƒÙ† Ù…ÙˆØ¬ÙˆØ¯Ø©.
+        let newTicketToken: string | null = null;
+        let encryptedTicketToken: string | null = null;
+        let ticketTokenHash: string | null = null;
+
+        if (!ticketDoc.exists) {
+            newTicketToken = randomBytes(32).toString("hex");
+            encryptedTicketToken = encryptTicketToken(newTicketToken);
+            ticketTokenHash = hashToken(newTicketToken);
+        }
+
+        // 8. Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ.
+        const recipientEmail = registrationData.data?.email;
+
+        if (typeof recipientEmail !== "string" || !recipientEmail.trim()) throw new Error("Registration email is missing.");
+
+        // 9. Ø¥Ø¶Ø§ÙØ© Ø§Ù„ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø­Ø§Ù„ÙŠ Ø¥Ù„Ù‰ Ø·Ø§Ø¨ÙˆØ± Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.
+        const updatedRegistrationIds = [...currentRegistrationIds, registrationId,];
+        const shouldCreateAdminBatch = updatedRegistrationIds.length >= ADMIN_BATCH_SIZE;
+        let adminBatchId: string | undefined;
+
+        if (shouldCreateAdminBatch) {
+            const nextBatchNumber = currentBatchNumber + 1;
+            adminBatchId = `admin_batch_${String(nextBatchNumber).padStart(6, "0")}`;
+        }
+
+        // 10. ØªØ­Ø¯ÙŠØ« Ø§Ù„ØªØ³Ø¬ÙŠÙ„.
+        transaction.update(registrationRef, {
+            status: "confirmed",
+            emailVerified: true,
+            emailVerifiedAt: FieldValue.serverTimestamp(),
+            registrantEmailStatus: registrantJobDoc.exists ? "queued" : "pending",
+            adminEmailStatus: "queued",
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        // 11. Ø§Ø³ØªÙ‡Ù„Ø§Ùƒ Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚.
+        transaction.update(verificationRef, {
+            usedAt: FieldValue.serverTimestamp(),
+        });
+
+        // 12. Ø¥Ù†Ø´Ø§Ø¡ ØªØ°ÙƒØ±Ø© Ù„Ù„Ø²Ø§Ø¦Ø± Ø£Ùˆ Ø§Ù„Ø¹Ø§Ø±Ø¶ Ù…Ø±Ø© ÙˆØ§Ø­Ø¯Ø© ÙÙ‚Ø·.
+        if (!ticketDoc.exists && newTicketToken && encryptedTicketToken && ticketTokenHash) {
+            transaction.set(ticketRef, {
+                registrationId,
+                registrationType,
+                exhibitionId: registrationData.exhibition?.id ?? null,
+                tokenHash: ticketTokenHash,
+                encryptedToken: encryptedTicketToken,
+                status: "valid",
+                checkedIn: false,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        }
+
+        // 13. Ø¥Ù†Ø´Ø§Ø¡ Ù…Ù‡Ù…Ø© ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ù…Ø³Ø¬Ù„.
+        if (!registrantJobDoc.exists) {
+            transaction.set(registrantJobRef, {
+                registrationId,
+                type: "registrant_confirmation",
+                recipient: recipientEmail.trim(),
+                status: "pending",
+                attempts: 0,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        }
+
+        // 14. ØªØ­Ø¯ÙŠØ« Ø·Ø§Ø¨ÙˆØ± ØªØ¬Ù…ÙŠØ¹ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©.
+        if (shouldCreateAdminBatch && adminBatchId) {
+            const adminBatchRef = adminDb
+                .collection(OUTBOX_COLLECTION)
+                .doc(adminBatchId);
+
+            transaction.set(adminBatchRef, {
+                type: "admin_registration_batch",
+                registrationIds: updatedRegistrationIds,
+                recipient: process.env.ADMIN_NOTIFICATION_EMAIL?.trim() ?? "",
+                status: "pending",
+                attempts: 0,
+                registrationCount: updatedRegistrationIds.length,
+                batchNumber: currentBatchNumber + 1,
+                createdAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+
+            // Ø¨Ø¯Ø¡ ØªØ¬Ù…ÙŠØ¹ Ù…Ø¬Ù…ÙˆØ¹Ø© Ø¬Ø¯ÙŠØ¯Ø©.
+            transaction.set(batchStateRef, {
+                registrationIds: [],
+                batchNumber: currentBatchNumber + 1,
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+        } else {
+            transaction.set(
+                batchStateRef,
+                {
+                    registrationIds: updatedRegistrationIds,
+                    batchNumber: currentBatchNumber,
+                    updatedAt: FieldValue.serverTimestamp(),
+                },
+                { merge: true },
+            );
+        }
+
+        return {
+            status: "success",
+            registrationId,
+            adminBatchId,
+        };
+    });
+}
+
+async function processRegistrantConfirmation(registrationId: string) {
+    const jobId = `${registrationId}_registrant_confirmation`;
+
+    const jobRef = adminDb
+        .collection(OUTBOX_COLLECTION)
+        .doc(jobId);
+
+    // Ø­Ø¬Ø² Ø§Ù„Ù…Ù‡Ù…Ø© Ù„Ù…Ù†Ø¹ ØªÙ†ÙÙŠØ°Ù‡Ø§ Ø¨Ø§Ù„ØªØ²Ø§Ù…Ù† Ù…Ø±ØªÙŠÙ†.
+    const claimed = await adminDb.runTransaction(async (transaction) => {
+        const jobDoc = await transaction.get(jobRef);
+
+        if (!jobDoc.exists) {
+            return false;
+        }
+
+        const jobData = jobDoc.data();
+
+        if (!jobData || jobData.status !== "pending") {
+            return false;
+        }
+
+        transaction.update(jobRef, {
+            status: "sending",
+            attempts: FieldValue.increment(1),
+            startedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return true;
+    });
+
+    if (!claimed) {
+        return;
+    }
+
+    try {
+        const [jobDoc, registrationDoc] = await Promise.all([
+            jobRef.get(),
+            adminDb
+                .collection(REGISTRATIONS_COLLECTION)
+                .doc(registrationId)
+                .get(),
+        ]);
+
+        const jobData = jobDoc.data();
+        const registrationData = registrationDoc.data();
+
+        if (!jobData || !registrationData) {
+            throw new Error("Outbox job or registration not found.");
+        }
+
+        const recipient = jobData.recipient;
+
+        if (typeof recipient !== "string" || !recipient.trim()) {
+            throw new Error("Email recipient is missing.");
+        }
+
+        const details = getRegistrationEmailDetails(registrationId, registrationData,);
+        const email = createRegistrationEmail(details);
+
+        const attachments: Array<{
+            filename: string;
+            content: Buffer;
+            contentType: string;
+            cid?: string;
+        }> = [];
+
+        // Ø¥Ø±ÙØ§Ù‚ QR Ù„Ù„Ø²Ø§Ø¦Ø± Ø£Ùˆ Ø§Ù„Ø¹Ø§Ø±Ø¶.
+        const ticketDoc = await adminDb
+            .collection(TICKETS_COLLECTION)
+            .doc(registrationId)
+            .get();
+
+        const ticketData = ticketDoc.data();
+
+        if (!ticketData || typeof ticketData.encryptedToken !== "string") {
+            throw new Error("Registration ticket was not found.");
+        }
+
+        const ticketToken = decryptTicketToken(ticketData.encryptedToken,);
+        const qrBuffer = await generateVisitorQrCode(ticketToken);
+
+        attachments.push({
+            filename: `event-maker-${details.registrationType}-ticket.png`,
+            content: qrBuffer,
+            contentType: "image/png",
+            cid: "event-ticket",
+        });
+
+        await sendEmail({
+            to: recipient,
+            subject: email.subject,
+            html: email.html,
+            text: email.text,
+            attachments,
+        });
+
+        // ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„Ù…Ù‡Ù…Ø© Ø¨Ø¹Ø¯ Ù†Ø¬Ø§Ø­ Ø§Ù„Ø¥Ø±Ø³Ø§Ù„.
+        await jobRef.update({
+            status: "sent",
+            sentAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            lastError: FieldValue.delete(),
+        });
+
+        await adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc(registrationId)
+            .update({
+                registrantEmailStatus: "sent",
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+    } catch (error) {
+        console.error(
+            `Registrant confirmation error (${jobId}):`,
+            error,
+        );
+
+        const errorMessage =
+            error instanceof Error
+                ? error.message.slice(0, 500)
+                : "Unknown email delivery error.";
+
+        // Ù„Ø§ Ù†Ø¹ÙŠØ¯ Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø© ØªÙ„Ù‚Ø§Ø¦ÙŠÙ‹Ø§Ø› ÙÙ‚Ø¯ ÙŠÙƒÙˆÙ† SMTP Ø§Ø³ØªÙ„Ù… Ø§Ù„Ø±Ø³Ø§Ù„Ø© Ø¨Ø§Ù„ÙØ¹Ù„.
+        await jobRef.update({
+            status: "needs_review",
+            lastError: errorMessage,
+            failedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        await adminDb
+            .collection(REGISTRATIONS_COLLECTION)
+            .doc(registrationId)
+            .update({
+                registrantEmailStatus: "needs_review",
+                updatedAt: FieldValue.serverTimestamp(),
+            });
+    }
+}
+
+async function processAdminBatchJob(batchId: string) {
+    const jobRef = adminDb
+        .collection(OUTBOX_COLLECTION)
+        .doc(batchId);
+
+    // Ø­Ø¬Ø² Ø§Ù„ØªÙ‚Ø±ÙŠØ± Ù„Ù…Ù†Ø¹ Ø¥Ø±Ø³Ø§Ù„Ù‡ Ù…Ø±ØªÙŠÙ† Ø¨Ø§Ù„ØªØ²Ø§Ù…Ù†.
+    const claimed = await adminDb.runTransaction(async (transaction) => {
+        const jobDoc = await transaction.get(jobRef);
+
+        if (!jobDoc.exists) {
+            return false;
+        }
+
+        const jobData = jobDoc.data();
+
+        if (
+            !jobData ||
+            jobData.status !== "pending" ||
+            jobData.type !== "admin_registration_batch"
+        ) {
+            return false;
+        }
+
+        transaction.update(jobRef, {
+            status: "sending",
+            attempts: FieldValue.increment(1),
+            startedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        return true;
+    });
+
+    if (!claimed) {
+        return;
+    }
+
+    try {
+        const jobDoc = await jobRef.get();
+        const jobData = jobDoc.data();
+
+        if (!jobData) {
+            throw new Error("Admin batch job was not found.");
+        }
+
+        const registrationIds: string[] = Array.isArray(
+            jobData.registrationIds,
+        )
+            ? jobData.registrationIds.filter(
+                (id: unknown): id is string =>
+                    typeof id === "string",
+            )
+            : [];
+
+        if (registrationIds.length !== ADMIN_BATCH_SIZE) {
+            throw new Error(
+                `Invalid admin batch size: expected ${ADMIN_BATCH_SIZE}, received ${registrationIds.length}.`,
+            );
+        }
+
+        const recipient =
+            typeof jobData.recipient === "string" &&
+                jobData.recipient.trim()
+                ? jobData.recipient.trim()
+                : process.env.ADMIN_NOTIFICATION_EMAIL?.trim();
+
+        if (!recipient) {
+            throw new Error("ADMIN_NOTIFICATION_EMAIL is missing.");
+        }
+
+        // Ø¬Ù„Ø¨ Ø§Ù„ØªØ³Ø¬ÙŠÙ„Ø§Øª Ø§Ù„Ù…Ø¦Ø©.
+        const registrationDocs = await Promise.all(
+            registrationIds.map((registrationId) =>
+                adminDb
+                    .collection(REGISTRATIONS_COLLECTION)
+                    .doc(registrationId)
+                    .get(),
+            ),
+        );
+
+        const registrations: RegistrationEmailDetails[] =
+            registrationDocs.map((registrationDoc, index) => {
+                if (!registrationDoc.exists) {
+                    throw new Error(
+                        `Registration ${registrationIds[index]} was not found.`,
+                    );
+                }
+
+                const registrationData = registrationDoc.data();
+
+                if (!registrationData) {
+                    throw new Error(
+                        `Registration ${registrationIds[index]} has no data.`,
+                    );
+                }
+
+                return getRegistrationEmailDetails(
+                    registrationIds[index],
+                    registrationData,
+                );
+            });
+
+        const email = createAdminRegistrationBatchEmail(registrations);
+
+        await sendEmail({
+            to: recipient,
+            subject: email.subject,
+            html: email.html,
+            text: email.text,
+        });
+
+        // ØªØ³Ø¬ÙŠÙ„ Ù†Ø¬Ø§Ø­ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªÙ‚Ø±ÙŠØ±.
+        await jobRef.update({
+            status: "sent",
+            sentAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            lastError: FieldValue.delete(),
+        });
+
+        // ØªØ­Ø¯ÙŠØ« Ø­Ø§Ù„Ø© Ø§Ù„ØªØ³Ø¬ÙŠÙ„Ø§Øª Ø§Ù„ØªØ§Ø¨Ø¹Ø© Ù„Ù„ØªÙ‚Ø±ÙŠØ±.
+        await Promise.all(
+            registrationIds.map((registrationId) =>
+                adminDb
+                    .collection(REGISTRATIONS_COLLECTION)
+                    .doc(registrationId)
+                    .update({
+                        adminEmailStatus: "sent",
+                        adminEmailBatchId: batchId,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }),
+            ),
+        );
+    } catch (error) {
+        console.error(
+            `Admin batch email error (${batchId}):`,
+            error,
+        );
+
+        const errorMessage =
+            error instanceof Error
+                ? error.message.slice(0, 500)
+                : "Unknown admin batch delivery error.";
+
+        // Ù„Ø§ Ù†Ø¹ÙŠØ¯ Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„ØªÙ‚Ø±ÙŠØ± ØªÙ„Ù‚Ø§Ø¦ÙŠÙ‹Ø§ Ø¹Ù†Ø¯ Ø­Ø¯ÙˆØ« Ø®Ø·Ø£ ØºÙŠØ± Ù…Ø­Ø³ÙˆÙ….
+        await jobRef.update({
+            status: "needs_review",
+            lastError: errorMessage,
+            failedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        const jobDoc = await jobRef.get();
+        const jobData = jobDoc.data();
+
+        const registrationIds: string[] = Array.isArray(
+            jobData?.registrationIds,
+        )
+            ? jobData.registrationIds.filter(
+                (id: unknown): id is string =>
+                    typeof id === "string",
+            )
+            : [];
+
+        await Promise.all(
+            registrationIds.map((registrationId) =>
+                adminDb
+                    .collection(REGISTRATIONS_COLLECTION)
+                    .doc(registrationId)
+                    .update({
+                        adminEmailStatus: "needs_review",
+                        adminEmailBatchId: batchId,
+                        updatedAt: FieldValue.serverTimestamp(),
+                    }),
+            ),
+        );
+    }
+}
+
+export async function GET(request: NextRequest) {
+    const token = request.nextUrl.searchParams.get("token");
+
+    if (!token || !/^[a-f0-9]{64}$/i.test(token)) {
+        return verificationPage(
+            "Ø±Ø§Ø¨Ø· ØºÙŠØ± ØµØ§Ù„Ø­",
+            "Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚ ØºÙŠØ± ØµØ­ÙŠØ­ Ø£Ùˆ ØºÙŠØ± Ù…ÙƒØªÙ…Ù„.",
+            false,
+        );
+    }
+
+    return verificationPage(
+        "ØªØ£ÙƒÙŠØ¯ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+        "Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø²Ø± Ø£Ø¯Ù†Ø§Ù‡ Ù„ØªØ£ÙƒÙŠØ¯ Ù…Ù„ÙƒÙŠØªÙƒ Ù„Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØ¥ÙƒÙ…Ø§Ù„ Ø§Ù„ØªØ³Ø¬ÙŠÙ„.",
+        true,
+        token,
+    );
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const formData = await request.formData();
+        const token = formData.get("token");
+
+        if (
+            typeof token !== "string" ||
+            !/^[a-f0-9]{64}$/i.test(token)
+        ) {
+            return verificationPage(
+                "Ø±Ø§Ø¨Ø· ØºÙŠØ± ØµØ§Ù„Ø­",
+                "Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚ ØºÙŠØ± ØµØ­ÙŠØ­ Ø£Ùˆ ØºÙŠØ± Ù…ÙƒØªÙ…Ù„.",
+                false,
+            );
+        }
+
+        const result = await verifyToken(token);
+
+        if (result.status === "success" || result.status === "already_confirmed") {
+            const tasks: Promise<void>[] = [processRegistrantConfirmation(result.registrationId),];
+
+            // Ø¥Ø±Ø³Ø§Ù„ ØªÙ‚Ø±ÙŠØ± Ø§Ù„Ø¥Ø¯Ø§Ø±Ø© ÙÙ‚Ø· Ø¹Ù†Ø¯ Ø¥Ù†Ø´Ø§Ø¡ Ù…Ø¬Ù…ÙˆØ¹Ø© Ø¬Ø¯ÙŠØ¯Ø©.
+            if (result.status === "success" && result.adminBatchId) {
+                tasks.push(processAdminBatchJob(result.adminBatchId),);
+            }
+
+            await Promise.all(tasks);
+
+            return verificationPage("ØªÙ… ØªØ£ÙƒÙŠØ¯ Ø¨Ø±ÙŠØ¯Ùƒ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ Ø¨Ù†Ø¬Ø§Ø­",
+                result.status === "already_confirmed" ? "ØªÙ… ØªØ£ÙƒÙŠØ¯ Ø¨Ø±ÙŠØ¯Ùƒ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØªØ³Ø¬ÙŠÙ„Ùƒ Ø¨Ø§Ù„ÙØ¹Ù„. Ù„Ø§ ØªØ­ØªØ§Ø¬ Ø¥Ù„Ù‰ Ø§ØªØ®Ø§Ø° Ø£ÙŠ Ø¥Ø¬Ø±Ø§Ø¡ Ø¥Ø¶Ø§ÙÙŠØŒ ÙˆØ´ÙƒØ±Ù‹Ø§ Ù„Ø§Ù†Ø¶Ù…Ø§Ù…Ùƒ Ø¥Ù„ÙŠÙ†Ø§!" : "Ø´ÙƒØ±Ù‹Ø§ Ù„Ùƒ! ØªÙ… Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø¨Ø±ÙŠØ¯Ùƒ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ ÙˆØªØ£ÙƒÙŠØ¯ ØªØ³Ø¬ÙŠÙ„Ùƒ. Ø¥Ø°Ø§ Ù„Ù… ØªØµÙ„Ùƒ Ø±Ø³Ø§Ù„Ø© Ø§Ù„ØªØ£ÙƒÙŠØ¯ØŒ ÙÙ‚Ø¯ ØªÙƒÙˆÙ† Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬Ø©.",
+                true,
+            );
+        }
+
+        if (result.status === "already_processed") {
+            return verificationPage(
+                "ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© Ù‡Ø°Ø§ Ø§Ù„ØªØ³Ø¬ÙŠÙ„",
+                "ØªÙ… Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ù‚Ø¨Ù„ Ø£Ùˆ ØªÙ…Øª Ù…Ø¹Ø§Ù„Ø¬Ø© Ø§Ù„ØªØ³Ø¬ÙŠÙ„ Ø¨Ø§Ù„ÙØ¹Ù„.",
+                false,
+            );
+        }
+
+        if (result.status === "expired") {
+            return verificationPage(
+                "Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø§Ù„Ø±Ø§Ø¨Ø·",
+                "Ø§Ù†ØªÙ‡Øª ØµÙ„Ø§Ø­ÙŠØ© Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚. ÙŠØ±Ø¬Ù‰ Ø·Ù„Ø¨ Ø±Ø§Ø¨Ø· ØªØ­Ù‚Ù‚ Ø¬Ø¯ÙŠØ¯.",
+                false,
+            );
+        }
+
+        return verificationPage(
+            "Ø±Ø§Ø¨Ø· Ø§Ù„ØªØ­Ù‚Ù‚ ØºÙŠØ± ØµØ§Ù„Ø­",
+            "ØªØ¹Ø°Ø± Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ù‡Ø°Ø§ Ø§Ù„Ø±Ø§Ø¨Ø·. ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ø±Ø§Ø¨Ø· Ø§Ù„ØµØ­ÙŠØ­.",
+            false,
+        );
+    } catch (error) {
+        console.error("Email verification error:", error);
+
+        return verificationPage(
+            "Ø­Ø¯Ø« Ø®Ø·Ø£",
+            "ØªÙ… Ø§Ø³ØªÙ„Ø§Ù… Ø·Ù„Ø¨ÙƒØŒ Ù„ÙƒÙ† Ø­Ø¯Ø« Ø®Ø·Ø£ Ø£Ø«Ù†Ø§Ø¡ Ø¥ÙƒÙ…Ø§Ù„ Ø§Ù„Ø¹Ù…Ù„ÙŠØ©. Ø­Ø§ÙˆÙ„ Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ù„Ø§Ø­Ù‚Ù‹Ø§.",
+            false,
+        );
+    }
+}
+
+
+==================================================
+FILE: app/api/test-email/route.ts
+==================================================
+
+import { NextResponse } from "next/server";
+import { sendTestEmail } from "@/lib/email/mailer";
+
+export async function POST() {
+    // Ù…Ù†Ø¹ ØªØ´ØºÙŠÙ„ Ø§Ø®ØªØ¨Ø§Ø± SMTP ÙÙŠ Ø¨ÙŠØ¦Ø© Ø§Ù„Ø¥Ù†ØªØ§Ø¬.
+    if (
+        process.env.NODE_ENV === "production" ||
+        process.env.SMTP_TEST_ENABLED !== "true"
+    ) {
+        return NextResponse.json(
+            { success: false, message: "Not found." },
+            { status: 404 },
+        );
+    }
+
+    try {
+        const info = await sendTestEmail();
+
+        return NextResponse.json({
+            success: true,
+            message: "Test email sent successfully.",
+            messageId: info.messageId,
+        });
+    } catch (error) {
+        console.error("SMTP test failed:", error);
+
+        return NextResponse.json(
+            {
+                success: false,
+                message:
+                    "Failed to send test email. Check the server terminal for details.",
+            },
+            { status: 500 },
+        );
+    }
+}
+
+==================================================
+FILE: contexts\ExhibitionsContext.tsx
+==================================================
+// contexts\ExhibitionsContext.tsx
+"use client";
+
+import {
+    createContext,
+    useContext,
+    useMemo,
+    useState,
+    type ReactNode,
+} from "react";
+
+import type { Exhibition } from "@/types/landingPage/exhibition";
+import {
+    getExhibitionStatus,
+    type ExhibitionStatus,
+} from "@/lib/utils/exhibition";
+
+interface ExhibitionsContextValue {
+    exhibitions: Exhibition[];
+    status: ExhibitionStatus;
+    setStatus: (status: ExhibitionStatus) => void;
+
+    filteredExhibitions: Exhibition[];
+
+    ongoingExhibitions: Exhibition[];
+    upcomingExhibitions: Exhibition[];
+    finishedExhibitions: Exhibition[];
+
+    getExhibitionBySlug: (
+        slug: string
+    ) => Exhibition | undefined;
+}
+
+interface ExhibitionsProviderProps {
+    children: ReactNode;
+    initialExhibitions: Exhibition[];
+    today: string;
+}
+
+const ExhibitionsContext =
+    createContext<ExhibitionsContextValue | null>(null);
+
+export function ExhibitionsProvider({
+    children,
+    initialExhibitions,
+    today,
+}: ExhibitionsProviderProps) {
+    const [status, setStatus] =
+        useState<ExhibitionStatus>("all");
+
+    // Ongoing exhibitions
+    const ongoingExhibitions = useMemo(() => {
+        return initialExhibitions.filter(
+            (exhibition) =>
+                getExhibitionStatus(exhibition, today) === "ongoing"
+        );
+    }, [initialExhibitions, today]);
+
+    // Upcoming exhibitions
+    const upcomingExhibitions = useMemo(() => {
+        return initialExhibitions.filter(
+            (exhibition) =>
+                getExhibitionStatus(exhibition, today) === "upcoming"
+        );
+    }, [initialExhibitions, today]);
+
+    // Finished exhibitions
+    const finishedExhibitions = useMemo(() => {
+        return initialExhibitions.filter(
+            (exhibition) =>
+                getExhibitionStatus(exhibition, today) === "finished"
+        );
+    }, [initialExhibitions, today]);
+
+    // Filtered exhibitions
+    const filteredExhibitions = useMemo(() => {
+        switch (status) {
+            case "ongoing":
+                return ongoingExhibitions;
+
+            case "upcoming":
+                return upcomingExhibitions;
+
+            case "finished":
+                return finishedExhibitions;
+
+            default:
+                return initialExhibitions;
+        }
+    }, [
+        status,
+        initialExhibitions,
+        ongoingExhibitions,
+        upcomingExhibitions,
+        finishedExhibitions,
+    ]);
+
+    // Get exhibition by slug
+    const getExhibitionBySlug = (
+        slug: string
+    ) => {
+        return initialExhibitions.find(
+            (exhibition) => exhibition.slug === slug
+        );
+    };
+
+    const value = useMemo(
+        () => ({
+            exhibitions: initialExhibitions,
+            status,
+            setStatus,
+            filteredExhibitions,
+            ongoingExhibitions,
+            upcomingExhibitions,
+            finishedExhibitions,
+            getExhibitionBySlug,
+        }),
+        [
+            initialExhibitions,
+            status,
+            filteredExhibitions,
+            ongoingExhibitions,
+            upcomingExhibitions,
+            finishedExhibitions,
+        ]
+    );
+
+    return (
+        <ExhibitionsContext.Provider value={value}>
+            {children}
+        </ExhibitionsContext.Provider>
+    );
+}
+
+export function useExhibitions() {
+    const context = useContext(ExhibitionsContext);
+
+    if (!context) {
+        throw new Error(
+            "useExhibitions must be used inside ExhibitionsProvider"
+        );
+    }
+
+    return context;
+}
+
+
+==================================================
+FILE: contexts\ServicesContext.tsx
+==================================================
+// contexts\ServicesContext.tsx
+"use client";
+
+import {
+    createContext,
+    useContext,
+    useMemo,
+    useState,
+} from "react";
+
+import type { Service } from "@/types/service";
+
+interface ServicesContextValue {
+    services: Service[];
+    activeService: Service | null;
+    activeIndex: number;
+    setActiveIndex: (index: number) => void;
+    setActiveService: (service: Service) => void;
+    getServiceBySlug: (slug: string) => Service | undefined;
+}
+
+interface ServicesProviderProps {
+    children: React.ReactNode;
+    initialServices: Service[];
+}
+
+const ServicesContext =
+    createContext<ServicesContextValue | null>(null);
+
+export function ServicesProvider({
+    children,
+    initialServices,
+}: ServicesProviderProps) {
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    const activeService =
+        initialServices[activeIndex] ?? null;
+
+    const value = useMemo(
+        () => ({
+            services: initialServices,
+
+            activeService,
+
+            activeIndex,
+
+            setActiveIndex,
+
+            setActiveService: (service: Service) => {
+                const index = initialServices.findIndex(
+                    (item) => item.id === service.id
+                );
+
+                if (index !== -1) {
+                    setActiveIndex(index);
+                }
+            },
+
+            getServiceBySlug: (slug: string) =>
+                initialServices.find(
+                    (service) => service.slug === slug
+                ),
+        }),
+        [
+            initialServices,
+            activeIndex,
+            activeService,
+        ]
+    );
+
+    return (
+        <ServicesContext.Provider value={value}>
+            {children}
+        </ServicesContext.Provider>
+    );
+}
+
+export function useServices() {
+    const context = useContext(ServicesContext);
+
+    if (!context) {
+        throw new Error(
+            "useServices must be used inside ServicesProvider"
+        );
+    }
+
+    return context;
+}
+
+==================================================
+FILE: lib/firebase/admin.ts
+==================================================
+// lib\firebase\admin.ts
+import { cert, getApps, initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+
+/* Firebase Environment Variables */
+function getRequiredEnv(name: string): string {
+    const value = process.env[name];
+
+    if (!value) { throw new Error(`Missing Firebase environment variable: ${name}`); }
+
+    return value;
+}
+
+/* Firebase Admin Configuration */
+const firebaseAdminConfig = {
+    credential: cert({
+        projectId: getRequiredEnv("FIREBASE_PROJECT_ID"),
+        clientEmail: getRequiredEnv("FIREBASE_CLIENT_EMAIL"),
+        privateKey: getRequiredEnv("FIREBASE_PRIVATE_KEY").replace(/\\n/g, "\n"),
+    }),
+};
+
+/* Firebase Admin App */
+const appName = "event-maker-admin";
+
+export const adminApp = getApps().find((app) => app.name === appName) ?? initializeApp(firebaseAdminConfig, appName);
+
+/* Firestore */
+export const adminDb = getFirestore(adminApp);
+
+==================================================
+FILE: lib\data\about\getAboutData.ts
+==================================================
+// lib\data\about\getAboutData.ts
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    AboutData,
+    AboutImage,
+    AboutStat,
+    AboutTeamMember,
+    AboutWhyUsFeature,
+    LocalizedText,
+} from "@/types/about/about";
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+function isRecord(
+    value: unknown
+): value is Record<string, unknown> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+    );
+}
+
+function normalizeString(value: unknown): string {
+    return typeof value === "string" ? value : "";
+}
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        ar: normalizeString(data.ar),
+        en: normalizeString(data.en),
+    };
+}
+
+function normalizeImage(
+    value: unknown
+): AboutImage {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        url: normalizeString(data.url),
+        public_id: normalizeString(data.public_id),
+    };
+}
+
+function normalizeStringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value.filter(
+        (item): item is string =>
+            typeof item === "string"
+    );
+}
+
+function normalizeDate(value: unknown): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (
+        isRecord(value) &&
+        typeof value.toDate === "function"
+    ) {
+        const date = value.toDate();
+
+        return date instanceof Date ? date : null;
+    }
+
+    return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Normalizers                                                                */
+/* -------------------------------------------------------------------------- */
+
+function normalizeStat(value: unknown): AboutStat {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        title: normalizeLocalizedText(data.title),
+        value: normalizeString(data.value),
+    };
+}
+
+function normalizeTeamMember(
+    value: unknown
+): AboutTeamMember {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        image: normalizeString(data.image),
+        name: normalizeLocalizedText(data.name),
+        position: normalizeLocalizedText(data.position),
+    };
+}
+
+function normalizeWhyUsFeature(
+    value: unknown
+): AboutWhyUsFeature {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        title: normalizeLocalizedText(data.title),
+        description: normalizeLocalizedText(data.description),
+        icon: normalizeString(data.icon),
+    };
+}
+
+/* -------------------------------------------------------------------------- */
+/* About Data                                                                  */
+/* -------------------------------------------------------------------------- */
+
+function normalizeAboutData(
+    data: Record<string, unknown>
+): AboutData {
+    const hero = isRecord(data.hero) ? data.hero : {};
+    const content = isRecord(data.content) ? data.content : {};
+    const partners = isRecord(data.partners) ? data.partners : {};
+    const stats = isRecord(data.stats) ? data.stats : {};
+    const team = isRecord(data.team) ? data.team : {};
+    const whyUs = isRecord(data.whyUs) ? data.whyUs : {};
+    const seo = isRecord(data.seo) ? data.seo : {};
+
+    return {
+        hero: {
+            title: normalizeLocalizedText(hero.title),
+            description: normalizeLocalizedText(hero.description),
+            image: normalizeImage(hero.image),
+        },
+
+        content: {
+            content_ar: normalizeString(content.content_ar),
+            content_en: normalizeString(content.content_en),
+            main_image: normalizeImage(content.main_image),
+            secondary_image_1: normalizeImage(
+                content.secondary_image_1
+            ),
+            secondary_image_2: normalizeImage(
+                content.secondary_image_2
+            ),
+        },
+
+        partners: {
+            title: normalizeLocalizedText(partners.title),
+            description: normalizeLocalizedText(
+                partners.description
+            ),
+            official: normalizeStringArray(partners.official),
+            others: normalizeStringArray(partners.others),
+        },
+
+        stats: {
+            title: normalizeLocalizedText(stats.title),
+            description: normalizeLocalizedText(
+                stats.description
+            ),
+            stats: Array.isArray(stats.stats)
+                ? stats.stats.map(normalizeStat)
+                : [],
+        },
+
+        team: {
+            title: normalizeLocalizedText(team.title),
+            description: normalizeLocalizedText(
+                team.description
+            ),
+            members: Array.isArray(team.members)
+                ? team.members.map(normalizeTeamMember)
+                : [],
+        },
+
+        whyUs: {
+            title: normalizeLocalizedText(whyUs.title),
+            description: normalizeLocalizedText(
+                whyUs.description
+            ),
+            features: Array.isArray(whyUs.features)
+                ? whyUs.features.map(normalizeWhyUsFeature)
+                : [],
+        },
+
+        seo: {
+            title: normalizeLocalizedText(seo.title),
+            description: normalizeLocalizedText(
+                seo.description
+            ),
+            keywords: normalizeLocalizedText(seo.keywords),
+        },
+
+        updated_at: normalizeDate(data.updated_at),
+    };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Get About Data                                                              */
+/* -------------------------------------------------------------------------- */
+export async function getAboutData(): Promise<AboutData> {
+    "use cache"
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("about")
+        .get();
+
+    if (!snapshot.exists) {
+        return normalizeAboutData({});
+    }
+
+    const data = snapshot.data();
+
+    if (!data) {
+        return normalizeAboutData({});
+    }
+
+    return normalizeAboutData(data);
+}
+
+
+==================================================
+FILE: lib\data\blog\getBlogCategories.ts
+==================================================
+
+import { cacheLife, cacheTag } from "next/cache";
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    BlogCategory,
+    LocalizedText,
+} from "@/types/blog";
+
+export const BLOG_CATEGORIES_TAG = "blog-categories";
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    const data =
+        value && typeof value === "object"
+            ? (value as Record<string, unknown>)
+            : {};
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+async function getCachedBlogCategories(): Promise<BlogCategory[]> {
+    "use cache";
+
+    cacheLife({
+        stale: 60,
+        revalidate: 300,
+        expire: 3600,
+    });
+
+    cacheTag(BLOG_CATEGORIES_TAG);
+
+    const snapshot = await adminDb
+        .collection("blog_categories")
+        .where("is_active", "==", true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => {
+            const data = doc.data();
+
+            return {
+                id: doc.id,
+                name: normalizeLocalizedText(data.title),
+                slug:
+                    typeof data.slug === "string"
+                        ? data.slug
+                        : "",
+            };
+        })
+        .filter((category) => category.slug);
+}
+
+export async function getBlogCategories(): Promise<BlogCategory[]> {
+    return getCachedBlogCategories();
+}
+
+
+==================================================
+FILE: lib\data\blog\getBlogData.ts
+==================================================
+// lib/data/blog/getBlogData.ts
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    BlogData,
+    BlogHero,
+    BlogSeo,
+    LocalizedText,
+} from "@/types/blog";
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    const data =
+        value &&
+        typeof value === "object"
+            ? (value as Record<string, unknown>)
+            : {};
+
+    return {
+        ar:
+            typeof data.ar === "string"
+                ? data.ar
+                : "",
+
+        en:
+            typeof data.en === "string"
+                ? data.en
+                : "",
+    };
+}
+
+function normalizeImage(value: unknown) {
+    const data =
+        value &&
+        typeof value === "object"
+            ? (value as Record<string, unknown>)
+            : {};
+
+    return {
+        url:
+            typeof data.url === "string"
+                ? data.url
+                : "",
+
+        publicId:
+            typeof data.public_id === "string"
+                ? data.public_id
+                : typeof data.publicId === "string"
+                    ? data.publicId
+                    : "",
+
+        alt: normalizeLocalizedText(data.alt),
+    };
+}
+
+export async function getBlogData(): Promise<BlogData> {
+    "use cache"
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("blog")
+        .get();
+
+    if (!snapshot.exists) {
+        return {
+            hero: {
+                title: {
+                    ar: "",
+                    en: "",
+                },
+
+                description: {
+                    ar: "",
+                    en: "",
+                },
+
+                image: {
+                    url: "",
+                    publicId: "",
+                    alt: {
+                        ar: "",
+                        en: "",
+                    },
+                },
+            },
+
+            seo: {
+                title: {
+                    ar: "",
+                    en: "",
+                },
+
+                description: {
+                    ar: "",
+                    en: "",
+                },
+
+                keywords: {
+                    ar: "",
+                    en: "",
+                },
+            },
+        };
+    }
+
+    const data = snapshot.data() ?? {};
+
+    const heroData =
+        data.hero &&
+        typeof data.hero === "object"
+            ? (data.hero as Record<string, unknown>)
+            : {};
+
+    const seoData =
+        data.seo &&
+        typeof data.seo === "object"
+            ? (data.seo as Record<string, unknown>)
+            : {};
+
+    const hero: BlogHero = {
+        title: normalizeLocalizedText(
+            heroData.title
+        ),
+
+        description: normalizeLocalizedText(
+            heroData.description
+        ),
+
+        image: normalizeImage(heroData.image),
+    };
+
+    const seo: BlogSeo = {
+        title: normalizeLocalizedText(
+            seoData.title
+        ),
+
+        description: normalizeLocalizedText(
+            seoData.description
+        ),
+
+        keywords: normalizeLocalizedText(
+            seoData.keywords
+        ),
+    };
+
+    return {
+        hero,
+        seo,
+    };
+}
+
+==================================================
+FILE: lib\data\blog\getBlogPostBySlug.ts
+==================================================
+// lib\data\blog\getBlogPostBySlug.ts
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    BlogCategory,
+    BlogPost,
+    LocalizedText,
+} from "@/types/blog";
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+function normalizeDate(
+    value: unknown
+): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (
+        typeof value === "object" &&
+        value !== null &&
+        "toDate" in value &&
+        typeof value.toDate === "function"
+    ) {
+        return value.toDate();
+    }
+
+    if (
+        typeof value === "string" ||
+        typeof value === "number"
+    ) {
+        const date = new Date(value);
+
+        return Number.isNaN(date.getTime())
+            ? null
+            : date;
+    }
+
+    return null;
+}
+
+function normalizeCategory(
+    id: string,
+    value: FirebaseFirestore.DocumentData
+): BlogCategory {
+    return {
+        id,
+        name: normalizeLocalizedText(
+            value.name ?? value.title
+        ),
+        slug:
+            typeof value.slug === "string"
+                ? value.slug
+                : "",
+    };
+}
+
+function normalizeBlogPost(
+    id: string,
+    data: FirebaseFirestore.DocumentData,
+    categoriesMap: Map<string, BlogCategory>
+): BlogPost {
+    const categoryIds = Array.isArray(data.categories)
+        ? data.categories.filter(
+              (categoryId): categoryId is string =>
+                  typeof categoryId === "string"
+          )
+        : [];
+
+    const categories = categoryIds
+        .map((categoryId) =>
+            categoriesMap.get(categoryId)
+        )
+        .filter(
+            (category): category is BlogCategory =>
+                Boolean(category)
+        );
+
+    const coverImage =
+        data.coverImage &&
+        typeof data.coverImage === "object"
+            ? data.coverImage
+            : {};
+
+    const seo =
+        data.seo &&
+        typeof data.seo === "object"
+            ? data.seo
+            : {};
+
+    return {
+        id,
+        title: normalizeLocalizedText(data.title),
+        content: normalizeLocalizedText(data.content),
+
+        coverImage: {
+            url:
+                typeof coverImage.url === "string"
+                    ? coverImage.url
+                    : "",
+
+            publicId:
+                typeof coverImage.public_id === "string"
+                    ? coverImage.public_id
+                    : "",
+
+            alt: normalizeLocalizedText(
+                coverImage.alt
+            ),
+        },
+
+        categories,
+
+        seo: {
+            metaTitle: normalizeLocalizedText(
+                seo.metaTitle
+            ),
+
+            metaDescription: normalizeLocalizedText(
+                seo.metaDescription
+            ),
+
+            slug:
+                typeof seo.slug === "string"
+                    ? seo.slug
+                    : "",
+        },
+
+        status:
+            typeof data.status === "string"
+                ? data.status
+                : "",
+
+        createdAt: normalizeDate(data.created_at),
+        updatedAt: normalizeDate(data.updated_at),
+    };
+}
+
+export async function getBlogPostBySlug(
+    slug: string
+): Promise<BlogPost | null> {
+    "use cache"
+
+    const normalizedSlug = slug.trim();
+
+    if (!normalizedSlug) {
+        return null;
+    }
+
+    const snapshot = await adminDb
+        .collection("blog_posts")
+        .where("seo.slug", "==", normalizedSlug)
+        .limit(1)
+        .get();
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    const doc = snapshot.docs[0];
+    const data = doc.data();
+
+    if (data.status !== "published") {
+        return null;
+    }
+
+    const categoryIds = Array.isArray(data.categories)
+        ? data.categories.filter(
+              (categoryId): categoryId is string =>
+                  typeof categoryId === "string"
+          )
+        : [];
+
+    const categorySnapshots = await Promise.all(
+        categoryIds.map((categoryId) =>
+            adminDb
+                .collection("blog_categories")
+                .doc(categoryId)
+                .get()
+        )
+    );
+
+    const categoriesMap =
+        new Map<string, BlogCategory>();
+
+    categorySnapshots.forEach((categorySnapshot) => {
+        if (!categorySnapshot.exists) {
+            return;
+        }
+
+        categoriesMap.set(
+            categorySnapshot.id,
+            normalizeCategory(
+                categorySnapshot.id,
+                categorySnapshot.data() ?? {}
+            )
+        );
+    });
+
+    return normalizeBlogPost(
+        doc.id,
+        data,
+        categoriesMap
+    );
+}
+
+
+==================================================
+FILE: lib\data\blog\getBlogPosts.ts
+==================================================
+// lib\data\blog\getBlogPosts.ts
+import { cacheLife, cacheTag } from "next/cache";
+import { adminDb } from "@/lib/firebase/admin";
+
+import { getBlogCategories } from "@/lib/data/blog/getBlogCategories";
+
+import type {
+    BlogCategory,
+    BlogPost,
+    BlogPostsResult,
+    LocalizedText,
+} from "@/types/blog";
+
+const POSTS_PER_PAGE = 9;
+
+const BLOG_POSTS_TAG = "blog-posts";
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    const data =
+        value && typeof value === "object"
+            ? (value as Record<string, unknown>)
+            : {};
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+function normalizeDate(value: unknown): Date | null {
+    if (!value) return null;
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (
+        typeof value === "object" &&
+        value !== null &&
+        "toDate" in value &&
+        typeof value.toDate === "function"
+    ) {
+        return value.toDate();
+    }
+
+    if (
+        typeof value === "string" ||
+        typeof value === "number"
+    ) {
+        const date = new Date(value);
+
+        return Number.isNaN(date.getTime())
+            ? null
+            : date;
+    }
+
+    return null;
+}
+
+function normalizeCategory(
+    category: BlogCategory
+): BlogCategory {
+    return {
+        id: category.id,
+        name: normalizeLocalizedText(category.name),
+        slug: category.slug,
+    };
+}
+
+function normalizePost(
+    id: string,
+    data: FirebaseFirestore.DocumentData,
+    categoriesMap: Map<string, BlogCategory>
+): BlogPost {
+    const coverImage =
+        data.coverImage &&
+        typeof data.coverImage === "object"
+            ? data.coverImage
+            : {};
+
+    const seo =
+        data.seo &&
+        typeof data.seo === "object"
+            ? data.seo
+            : {};
+
+    const categoryIds = Array.isArray(data.categories)
+        ? data.categories.filter(
+            (item): item is string =>
+                typeof item === "string"
+        )
+        : [];
+
+    const categories = categoryIds
+        .map((categoryId) => categoriesMap.get(categoryId))
+        .filter(
+            (category): category is BlogCategory =>
+                Boolean(category)
+        );
+
+    return {
+        id,
+
+        title: normalizeLocalizedText(data.title),
+        content: normalizeLocalizedText(data.content),
+
+        coverImage: {
+            url:
+                typeof coverImage.url === "string"
+                    ? coverImage.url
+                    : "",
+
+            publicId:
+                typeof coverImage.public_id === "string"
+                    ? coverImage.public_id
+                    : typeof coverImage.publicId === "string"
+                        ? coverImage.publicId
+                        : "",
+
+            alt: normalizeLocalizedText(coverImage.alt),
+        },
+
+        categories,
+
+        seo: {
+            metaTitle: normalizeLocalizedText(seo.metaTitle),
+            metaDescription: normalizeLocalizedText(
+                seo.metaDescription
+            ),
+            slug:
+                typeof seo.slug === "string"
+                    ? seo.slug
+                    : "",
+        },
+
+        status:
+            typeof data.status === "string"
+                ? data.status
+                : "",
+
+        createdAt: normalizeDate(data.created_at),
+        updatedAt: normalizeDate(data.updated_at),
+    };
+}
+
+/**
+ * Builds the base Firestore query.
+ */
+function buildPostsQuery(categoryId: string | null) {
+    let query = adminDb
+        .collection("blog_posts")
+        .where("status", "==", "published");
+
+    if (categoryId) {
+        query = query.where(
+            "categories",
+            "array-contains",
+            categoryId
+        );
+    }
+
+    return query;
+}
+
+/**
+ * Cached total count.
+ * Independent from sorting and pagination.
+ */
+async function getCachedBlogPostsCount(
+    categoryId: string | null
+): Promise<number> {
+    "use cache";
+
+    cacheLife({
+        stale: 60,
+        revalidate: 300,
+        expire: 3600,
+    });
+
+    const categoryKey = categoryId ?? "all";
+
+    cacheTag(
+        BLOG_POSTS_TAG,
+        `blog-post-count-${categoryKey}`
+    );
+
+    const startedAt = performance.now();
+
+    const snapshot = await buildPostsQuery(categoryId)
+        .count()
+        .get();
+
+    console.log("[BLOG COUNT QUERY]", {
+        category: categoryId ?? "all",
+        duration: `${(
+            performance.now() - startedAt
+        ).toFixed(2)} ms`,
+    });
+
+    return snapshot.data().count;
+}
+
+/**
+ * Cached posts page.
+ * Cache key depends on category, sorting and page.
+ */
+async function getCachedBlogPostsPage(
+    categoryId: string | null,
+    sort: "latest" | "oldest",
+    page: number,
+    categories: BlogCategory[]
+): Promise<BlogPost[]> {
+    "use cache";
+
+    cacheLife({
+        stale: 60,
+        revalidate: 300,
+        expire: 3600,
+    });
+
+    const categoryKey = categoryId ?? "all";
+
+    cacheTag(
+        BLOG_POSTS_TAG,
+        `blog-posts-category-${categoryKey}`
+    );
+
+    const sortDirection =
+        sort === "oldest" ? "asc" : "desc";
+
+    const startedAt = performance.now();
+
+    const snapshot = await buildPostsQuery(categoryId)
+        .orderBy("created_at", sortDirection)
+        .offset((page - 1) * POSTS_PER_PAGE)
+        .limit(POSTS_PER_PAGE)
+        .get();
+
+    console.log("[BLOG POSTS QUERY]", {
+        category: categoryId ?? "all",
+        sort,
+        page,
+        duration: `${(
+            performance.now() - startedAt
+        ).toFixed(2)} ms`,
+    });
+
+    const categoriesMap = new Map<string, BlogCategory>();
+
+    for (const category of categories) {
+        categoriesMap.set(
+            category.id,
+            normalizeCategory(category)
+        );
+    }
+
+    return snapshot.docs.map((doc) =>
+        normalizePost(
+            doc.id,
+            doc.data(),
+            categoriesMap
+        )
+    );
+}
+
+/**
+ * Public blog posts function.
+ */
+export async function getBlogPosts({
+    category,
+    sort = "latest",
+    page = 1,
+}: {
+    category?: string;
+    sort?: "latest" | "oldest";
+    page?: number;
+} = {}): Promise<BlogPostsResult> {
+    const requestedPage = Number.isFinite(page)
+        ? Math.max(1, Math.floor(page))
+        : 1;
+
+    const categories = await getBlogCategories();
+
+    const normalizedCategory = category?.trim();
+
+    const selectedCategory = normalizedCategory
+        ? categories.find(
+            (item) => item.slug === normalizedCategory
+        )
+        : undefined;
+
+    if (normalizedCategory && !selectedCategory) {
+        return {
+            posts: [],
+            totalPosts: 0,
+            totalPages: 1,
+            currentPage: 1,
+        };
+    }
+
+    const categoryId = selectedCategory?.id ?? null;
+
+    // Run count and posts queries simultaneously.
+    const [totalPosts, requestedPosts] = await Promise.all([
+        getCachedBlogPostsCount(categoryId),
+
+        getCachedBlogPostsPage(
+            categoryId,
+            sort,
+            requestedPage,
+            categories
+        ),
+    ]);
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(totalPosts / POSTS_PER_PAGE)
+    );
+
+    const safePage = Math.min(
+        requestedPage,
+        totalPages
+    );
+
+    // Fetch the last valid page if the requested page is out of range.
+    const posts =
+        safePage === requestedPage
+            ? requestedPosts
+            : await getCachedBlogPostsPage(
+                categoryId,
+                sort,
+                safePage,
+                categories
+            );
+
+    return {
+        posts,
+        totalPosts,
+        totalPages,
+        currentPage: safePage,
+    };
+}
+
+
+==================================================
+FILE: lib\data\blog\getRelatedBlogPosts.ts
+==================================================
+// lib\data\blog\getRelatedBlogPosts.ts
+import { cacheLife, cacheTag } from "next/cache";
+
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    BlogCategory,
+    BlogPost,
+    LocalizedText,
+} from "@/types/blog";
+
+export const BLOG_RELATED_POSTS_TAG = "blog-related-posts";
+const RELATED_POSTS_CANDIDATE_LIMIT = 30;
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+function normalizeDate(
+    value: unknown
+): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (
+        typeof value === "object" &&
+        value !== null &&
+        "toDate" in value &&
+        typeof value.toDate === "function"
+    ) {
+        return value.toDate();
+    }
+
+    if (
+        typeof value === "string" ||
+        typeof value === "number"
+    ) {
+        const date = new Date(value);
+
+        return Number.isNaN(date.getTime())
+            ? null
+            : date;
+    }
+
+    return null;
+}
+
+function normalizeCategory(
+    id: string,
+    value: FirebaseFirestore.DocumentData
+): BlogCategory {
+    return {
+        id,
+
+        name: normalizeLocalizedText(
+            value.name ?? value.title
+        ),
+
+        slug:
+            typeof value.slug === "string"
+                ? value.slug
+                : "",
+    };
+}
+
+function getCategoryIds(
+    data: FirebaseFirestore.DocumentData
+): string[] {
+    if (!Array.isArray(data.categories)) {
+        return [];
+    }
+
+    return [
+        ...new Set(
+            data.categories.filter(
+                (categoryId): categoryId is string =>
+                    typeof categoryId === "string"
+            )
+        ),
+    ];
+}
+
+function normalizeBlogPost(
+    id: string,
+    data: FirebaseFirestore.DocumentData,
+    categoriesMap: Map<string, BlogCategory>
+): BlogPost {
+    const categoryIds = getCategoryIds(data);
+
+    const categories = categoryIds
+        .map((categoryId) =>
+            categoriesMap.get(categoryId)
+        )
+        .filter(
+            (category): category is BlogCategory =>
+                Boolean(category)
+        );
+
+    const coverImage =
+        data.coverImage &&
+            typeof data.coverImage === "object"
+            ? data.coverImage
+            : {};
+
+    const seo =
+        data.seo &&
+            typeof data.seo === "object"
+            ? data.seo
+            : {};
+
+    return {
+        id,
+
+        title: normalizeLocalizedText(data.title),
+
+        content: normalizeLocalizedText(data.content),
+
+        coverImage: {
+            url:
+                typeof coverImage.url === "string"
+                    ? coverImage.url
+                    : "",
+
+            publicId:
+                typeof coverImage.public_id === "string"
+                    ? coverImage.public_id
+                    : "",
+
+            alt: normalizeLocalizedText(
+                coverImage.alt
+            ),
+        },
+
+        categories,
+
+        seo: {
+            metaTitle: normalizeLocalizedText(
+                seo.metaTitle
+            ),
+
+            metaDescription: normalizeLocalizedText(
+                seo.metaDescription
+            ),
+
+            slug:
+                typeof seo.slug === "string"
+                    ? seo.slug
+                    : "",
+        },
+
+        status:
+            typeof data.status === "string"
+                ? data.status
+                : "",
+
+        createdAt: normalizeDate(data.created_at),
+
+        updatedAt: normalizeDate(data.updated_at),
+    };
+}
+
+function chunkArray<T>(
+    items: T[],
+    size: number
+): T[][] {
+    const chunks: T[][] = [];
+
+    for (
+        let index = 0;
+        index < items.length;
+        index += size
+    ) {
+        chunks.push(items.slice(index, index + size));
+    }
+
+    return chunks;
+}
+
+/* Cached data layer. */
+async function getCachedRelatedBlogPosts(
+    categoryIds: string[]
+): Promise<BlogPost[]> {
+    "use cache";
+
+    cacheLife({
+        stale: 60,
+        revalidate: 300,
+        expire: 3600,
+    });
+
+    cacheTag(BLOG_RELATED_POSTS_TAG);
+
+    if (categoryIds.length === 0) {
+        return [];
+    }
+
+    const categoryChunks = chunkArray(
+        categoryIds,
+        30
+    );
+
+    // Fetch only the latest 30 matching posts per query.
+    const snapshots = await Promise.all(
+        categoryChunks.map((chunk) =>
+            adminDb
+                .collection("blog_posts")
+                .where("status", "==", "published")
+                .where(
+                    "categories",
+                    "array-contains-any",
+                    chunk
+                )
+                .orderBy("created_at", "desc")
+                .limit(RELATED_POSTS_CANDIDATE_LIMIT)
+                .get()
+        )
+    );
+
+    // Deduplicate documents returned by multiple queries.
+    const documentsMap = new Map<
+        string,
+        FirebaseFirestore.QueryDocumentSnapshot
+    >();
+
+    for (const snapshot of snapshots) {
+        for (const doc of snapshot.docs) {
+            documentsMap.set(doc.id, doc);
+        }
+    }
+
+    if (documentsMap.size === 0) {
+        return [];
+    }
+
+    const currentCategoryIds = new Set(categoryIds);
+
+    // Rank candidates by shared categories, then creation date.
+    const candidates = Array.from(
+        documentsMap.values()
+    )
+        .map((doc) => {
+            const data = doc.data();
+
+            const relatedCategoryIds =
+                getCategoryIds(data);
+
+            const sharedCategories =
+                relatedCategoryIds.filter(
+                    (categoryId) =>
+                        currentCategoryIds.has(categoryId)
+                ).length;
+
+            return {
+                doc,
+                data,
+                sharedCategories,
+                createdAt: normalizeDate(data.created_at),
+            };
+        })
+        .filter(
+            (candidate) =>
+                candidate.sharedCategories > 0
+        )
+        .sort((a, b) => {
+            if (
+                a.sharedCategories !==
+                b.sharedCategories
+            ) {
+                return (
+                    b.sharedCategories -
+                    a.sharedCategories
+                );
+            }
+
+            return (
+                (b.createdAt?.getTime() ?? 0) -
+                (a.createdAt?.getTime() ?? 0)
+            );
+        })
+        .slice(0, RELATED_POSTS_CANDIDATE_LIMIT);
+
+    if (candidates.length === 0) {
+        return [];
+    }
+
+    // Collect only category IDs needed by selected candidates.
+    const relatedCategoryIds = [
+        ...new Set(
+            candidates.flatMap((candidate) =>
+                getCategoryIds(candidate.data)
+            )
+        ),
+    ];
+
+    const categoriesMap = new Map<
+        string,
+        BlogCategory
+    >();
+
+    if (relatedCategoryIds.length > 0) {
+        const categoryRefs = relatedCategoryIds.map(
+            (categoryId) =>
+                adminDb
+                    .collection("blog_categories")
+                    .doc(categoryId)
+        );
+
+        const categorySnapshots = await adminDb.getAll(
+            ...categoryRefs
+        );
+
+        for (const categorySnapshot of categorySnapshots) {
+            if (!categorySnapshot.exists) {
+                continue;
+            }
+
+            categoriesMap.set(
+                categorySnapshot.id,
+                normalizeCategory(
+                    categorySnapshot.id,
+                    categorySnapshot.data() ?? {}
+                )
+            );
+        }
+    }
+
+    return candidates.map((candidate) =>
+        normalizeBlogPost(
+            candidate.doc.id,
+            candidate.data,
+            categoriesMap
+        )
+    );
+}
+
+export async function getRelatedBlogPosts(
+    post: BlogPost,
+    limit = 3
+): Promise<BlogPost[]> {
+    const safeLimit = Number.isFinite(limit)
+        ? Math.max(0, Math.floor(limit))
+        : 3;
+
+    if (
+        !post.id ||
+        safeLimit === 0 ||
+        !post.categories ||
+        post.categories.length === 0
+    ) {
+        return [];
+    }
+
+    const categoryIds = [
+        ...new Set(
+            post.categories
+                .map((category) => category.id)
+                .filter(
+                    (categoryId) =>
+                        typeof categoryId === "string" &&
+                        categoryId.length > 0
+                )
+        ),
+    ].sort();
+
+    if (categoryIds.length === 0) {
+        return [];
+    }
+
+    const relatedPosts =
+        await getCachedRelatedBlogPosts(categoryIds);
+
+    // Exclude the current article after retrieving cached candidates.
+    return relatedPosts
+        .filter(
+            (relatedPost) =>
+                relatedPost.id !== post.id
+        )
+        .slice(0, safeLimit);
+}
+
+==================================================
+FILE: lib\data\exhibitions\getExhibitionsData.ts
+==================================================
+// lib/data/exhibitions/getExhibitionsData.ts
+
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    ExhibitionsData,
+    ExhibitionImage,
+    LocalizedText,
+} from "@/types/exhibitions/exhibitions";
+
+function isRecord(
+    value: unknown,
+): value is Record<string, unknown> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+    );
+}
+
+function normalizeString(value: unknown): string {
+    return typeof value === "string" ? value : "";
+}
+
+function normalizeLocalizedText(
+    value: unknown,
+): LocalizedText {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        ar: normalizeString(data.ar),
+        en: normalizeString(data.en),
+    };
+}
+
+function normalizeImage(
+    value: unknown,
+): ExhibitionImage {
+    const data = isRecord(value) ? value : {};
+
+    return {
+        url: normalizeString(data.url),
+        public_id: normalizeString(data.public_id),
+    };
+}
+
+function normalizeDate(
+    value: unknown,
+): Date | null {
+    if (!value) {
+        return null;
+    }
+
+    if (value instanceof Date) {
+        return value;
+    }
+
+    if (
+        isRecord(value) &&
+        typeof value.toDate === "function"
+    ) {
+        const date = value.toDate();
+
+        return date instanceof Date ? date : null;
+    }
+
+    return null;
+}
+
+function normalizeExhibitionsData(
+    data: Record<string, unknown>,
+): ExhibitionsData {
+    const hero = isRecord(data.hero)
+        ? data.hero
+        : {};
+
+    const seo = isRecord(data.seo)
+        ? data.seo
+        : {};
+
+    return {
+        hero: {
+            title: normalizeLocalizedText(hero.title),
+            description: normalizeLocalizedText(
+                hero.description,
+            ),
+            image: normalizeImage(hero.image),
+        },
+
+        seo: {
+            title: normalizeLocalizedText(seo.title),
+            description: normalizeLocalizedText(
+                seo.description,
+            ),
+            keywords: normalizeLocalizedText(
+                seo.keywords,
+            ),
+        },
+
+        updated_at: normalizeDate(data.updated_at),
+    };
+}
+
+export async function getExhibitionsData(): Promise<ExhibitionsData | null> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("exhibitions")
+        .get();
+
+    if (!snapshot.exists) {
+        return null;
+    }
+
+    const data = snapshot.data();
+
+    if (!data) {
+        return null;
+    }
+
+    return normalizeExhibitionsData(data);
+}
+
+==================================================
+FILE: lib\data\getSessions.ts
+==================================================
+// lib\data\getSessions.ts
+import { adminDb } from "@/lib/firebase/admin";
+import type { Session } from "@/types/sessions";
+interface SessionDocument {
+    id?: unknown;
+    title?: unknown;
+    poster?: unknown;
+    youtubeUrl?: unknown;
+    created_at?: unknown;
+    updated_at?: unknown;
+}
+
+interface SessionsDocument {
+    sessions?: unknown;
+}
+
+function normalizeLocalizedText(
+    value: unknown
+): { ar: string; en: string } {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+function normalizeSession(
+    id: string,
+    data: SessionDocument
+): Session | null {
+    const poster =
+        data.poster &&
+        typeof data.poster === "object"
+            ? (data.poster as Record<string, unknown>)
+            : null;
+
+    const youtubeUrl =
+        typeof data.youtubeUrl === "string"
+            ? data.youtubeUrl.trim()
+            : "";
+
+    const posterUrl =
+        poster &&
+        typeof poster.url === "string"
+            ? poster.url.trim()
+            : "";
+
+    if (!youtubeUrl || !posterUrl) {
+        return null;
+    }
+
+    return {
+        id,
+        title: normalizeLocalizedText(data.title),
+        poster: {
+            public_id:
+                poster &&
+                typeof poster.public_id === "string"
+                    ? poster.public_id
+                    : "",
+            url: posterUrl,
+        },
+        youtubeUrl,
+        created_at:
+            typeof data.created_at === "string"
+                ? data.created_at
+                : null,
+        updated_at:
+            typeof data.updated_at === "string"
+                ? data.updated_at
+                : null,
+    };
+}
+
+export async function getSessions(): Promise<Session[]> {
+    "use cache"
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("sessions")
+        .get();
+
+    if (!snapshot.exists) {
+        return [];
+    }
+
+    const data = snapshot.data() as SessionsDocument;
+
+    if (!Array.isArray(data.sessions)) {
+        return [];
+    }
+
+    return data.sessions
+        .map((item) => {
+            if (!item || typeof item !== "object") {
+                return null;
+            }
+
+            const session = item as SessionDocument;
+
+            const id =
+                typeof session.id === "string"
+                    ? session.id
+                    : "";
+
+            if (!id) {
+                return null;
+            }
+
+            return normalizeSession(id, session);
+        })
+        .filter(
+            (session): session is Session =>
+                session !== null
+        )
+        .sort((a, b) => {
+            const dateA = a.created_at
+                ? new Date(a.created_at).getTime()
+                : 0;
+
+            const dateB = b.created_at
+                ? new Date(b.created_at).getTime()
+                : 0;
+
+            return dateB - dateA;
+        });
+}
+
+==================================================
+FILE: lib\data\getTodayDate.ts
+==================================================
+
+import "server-only";
+import { cacheLife } from "next/cache";
+
+export async function getTodayDate(): Promise<string> {
+    "use cache";
+
+    cacheLife("hours");
+
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Riyadh",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).format(new Date());
+}
+
+
+==================================================
+FILE: lib\data\homepage.ts
+==================================================
+// lib\data\homepage.ts
+import { adminDb } from "@/lib/firebase/admin";
+import { getExhibitionById } from "@/lib/data/landingPage/exhibitions";
+import type { Exhibition } from "@/types/landingPage/exhibition";
+
+/* Hero Slides */
+export interface HeroSlide {
+    id: number;
+    image: string;
+
+    ar: {
+        eyebrow: string;
+        title: string;
+        description: string;
+        primaryButton: string;
+        secondaryButton: string;
+    };
+
+    en: {
+        eyebrow: string;
+        title: string;
+        description: string;
+        primaryButton: string;
+        secondaryButton: string;
+    };
+
+    link1: string;
+    link2: string;
+}
+
+function normalizeLocalizedContent(value: unknown): HeroSlide["ar"] | null {
+    if (!value || typeof value !== "object") { return null; }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.eyebrow !== "string" ||
+        typeof data.title !== "string" ||
+        typeof data.description !== "string" ||
+        typeof data.primaryButton !== "string" ||
+        typeof data.secondaryButton !== "string"
+    ) {
+        return null;
+    }
+
+    return {
+        eyebrow: data.eyebrow,
+        title: data.title,
+        description: data.description,
+        primaryButton: data.primaryButton,
+        secondaryButton: data.secondaryButton,
+    };
+}
+
+function normalizeHeroSlide(value: unknown): HeroSlide | null {
+
+    if (!value || typeof value !== "object") { return null; }
+
+    const data = value as Record<string, unknown>;
+    const ar = normalizeLocalizedContent(data.ar);
+    const en = normalizeLocalizedContent(data.en);
+
+    if (
+        typeof data.id !== "number" ||
+        typeof data.image !== "string" ||
+        typeof data.link1 !== "string" ||
+        typeof data.link2 !== "string" ||
+        !ar ||
+        !en
+    ) {
+        return null;
+    }
+
+    return {
+        id: data.id,
+        image: data.image,
+        ar,
+        en,
+        link1: data.link1,
+        link2: data.link2,
+    };
+}
+
+export async function getHeroSlides(): Promise<HeroSlide[]> {
+    "use cache"
+    const doc = await adminDb.collection("site_content").doc("home").get();
+
+    if (!doc.exists) { return []; }
+
+    const data = doc.data();
+
+    if (!data?.hero || typeof data.hero !== "object") {
+        return [];
+    }
+
+    const hero = data.hero as Record<string, unknown>;
+
+    if (!Array.isArray(hero.slides)) {
+        return [];
+    }
+
+    return hero.slides
+        .map(normalizeHeroSlide)
+        .filter((slide): slide is HeroSlide => slide !== null);
+}
+
+/* Home SEO */
+export interface HomeSEO {
+    title: {
+        ar: string;
+        en: string;
+    };
+
+    description: {
+        ar: string;
+        en: string;
+    };
+
+    keywords?: {
+        ar: string;
+        en: string;
+    };
+}
+
+export async function getHomeSEO(): Promise<HomeSEO | null> {
+    "use cache";
+
+    const doc = await adminDb
+        .collection("site_content")
+        .doc("home")
+        .get();
+
+    if (!doc.exists) {
+        return null;
+    }
+
+    const data = doc.data();
+
+    if (!data?.seo || typeof data.seo !== "object") {
+        return null;
+    }
+
+    const seo = data.seo as Record<string, unknown>;
+
+    const title = seo.title as Record<string, unknown> | undefined;
+    const description = seo.description as Record<string, unknown> | undefined;
+    const keywords = seo.keywords as Record<string, unknown> | undefined;
+
+    if (
+        !title ||
+        !description ||
+        typeof title.ar !== "string" ||
+        !title.ar.trim() ||
+        typeof title.en !== "string" ||
+        !title.en.trim() ||
+        typeof description.ar !== "string" ||
+        !description.ar.trim() ||
+        typeof description.en !== "string" ||
+        !description.en.trim()
+    ) {
+        return null;
+    }
+
+    const validKeywords =
+        keywords &&
+        typeof keywords.ar === "string" &&
+        typeof keywords.en === "string" &&
+        keywords.ar.trim().length > 0 &&
+        keywords.en.trim().length > 0;
+
+    return {
+        title: {
+            ar: title.ar.trim(),
+            en: title.en.trim(),
+        },
+
+        description: {
+            ar: description.ar.trim(),
+            en: description.en.trim(),
+        },
+
+        ...(validKeywords && {
+            keywords: {
+                ar: keywords.ar as string,
+                en: keywords.en as string,
+            },
+        }),
+    };
+}
+
+export interface HomepageSettings {
+    mode: "company" | "exhibition";
+    exhibition_id: string;
+    landing_start_date: string;
+}
+
+export type HomepageExhibition = Exhibition;
+export type HomepageData = | { mode: "company"; } | { mode: "exhibition"; exhibition: HomepageExhibition; };
+
+export async function getHomepageSettings(): Promise<HomepageSettings> {
+    "use cache"
+    const doc = await adminDb.collection("site_settings").doc("settings_homepage").get();
+
+    if (!doc.exists) {
+        return {
+            mode: "company",
+            exhibition_id: "",
+            landing_start_date: "",
+        };
+    }
+
+    const data = doc.data();
+
+    if (!data) {
+        return {
+            mode: "company",
+            exhibition_id: "",
+            landing_start_date: "",
+        };
+    }
+
+    const mode: HomepageSettings["mode"] = data.mode === "exhibition" ? "exhibition" : "company";
+
+    return {
+        mode,
+        exhibition_id: typeof data.exhibition_id === "string" ? data.exhibition_id : "",
+        landing_start_date: typeof data.landing_start_date === "string" ? data.landing_start_date : "",
+    };
+}
+
+export async function getHomepageData(): Promise<HomepageData> {
+    const settings = await getHomepageSettings();
+    if (settings.mode !== "exhibition" || !settings.exhibition_id) { return { mode: "company" }; }
+
+    const exhibition = await getExhibitionById(settings.exhibition_id);
+    if (!exhibition) { return { mode: "company" }; }
+
+    return {
+        mode: "exhibition",
+        exhibition,
+    };
+}
+
+==================================================
+FILE: lib\data\landingPage\exhibitions.ts
+==================================================
+// lib\data\landingPage\exhibitions.ts
+import { adminDb } from "@/lib/firebase/admin";
+
+import type {
+    Exhibition,
+    ExhibitionAboutCard,
+    ExhibitionAboutSection,
+    ExhibitionImage,
+    ExhibitionLocation,
+    ExhibitionMedia,
+    ExhibitionPartner,
+    ExhibitionSpeaker,
+    ExhibitionStat,
+    LocalizedText,
+} from "@/types/landingPage/exhibition";
+
+function normalizeLocalizedText(
+    value: unknown,
+): LocalizedText {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        ar:
+            typeof data.ar === "string"
+                ? data.ar
+                : "",
+        en:
+            typeof data.en === "string"
+                ? data.en
+                : "",
+    };
+}
+
+function normalizeImage(
+    value: unknown,
+): ExhibitionImage | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.url !== "string" ||
+        !data.url.trim()
+    ) {
+        return null;
+    }
+
+    return {
+        public_id:
+            typeof data.public_id === "string"
+                ? data.public_id
+                : "",
+        url: data.url,
+    };
+}
+
+function normalizeDate(
+    value: unknown,
+): string | null {
+    if (!value) {
+        return null;
+    }
+
+    if (typeof value === "string") {
+        return value;
+    }
+
+    if (value instanceof Date) {
+        return value.toISOString();
+    }
+
+    if (
+        typeof value === "object" &&
+        value !== null &&
+        "toDate" in value &&
+        typeof (
+            value as {
+                toDate?: unknown;
+            }
+        ).toDate === "function"
+    ) {
+        try {
+            return (
+                value as {
+                    toDate: () => Date;
+                }
+            ).toDate().toISOString();
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
+}
+
+function normalizeLocation(
+    value: unknown,
+): ExhibitionLocation {
+    if (!value || typeof value !== "object") {
+        return {
+            address: {
+                ar: "",
+                en: "",
+            },
+            google_map: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        address: normalizeLocalizedText(
+            data.address,
+        ),
+        google_map:
+            typeof data.google_map === "string"
+                ? data.google_map
+                : "",
+    };
+}
+
+function normalizeStats(
+    value: unknown,
+): ExhibitionStat[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .filter(
+            (
+                item,
+            ): item is Record<string, unknown> =>
+                !!item &&
+                typeof item === "object",
+        )
+        .map((item) => ({
+            value:
+                typeof item.value === "string"
+                    ? item.value
+                    : typeof item.value === "number"
+                        ? String(item.value)
+                        : "",
+            title: normalizeLocalizedText(
+                item.title,
+            ),
+        }))
+        .filter(
+            (stat) =>
+                stat.value ||
+                stat.title.ar ||
+                stat.title.en,
+        );
+}
+
+function normalizeAboutCard(
+    value: unknown,
+): ExhibitionAboutCard | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    const title = normalizeLocalizedText(
+        data.title,
+    );
+
+    const description =
+        normalizeLocalizedText(
+            data.description,
+        );
+
+    const icon =
+        typeof data.icon === "string"
+            ? data.icon
+            : "";
+
+    if (
+        !title.ar &&
+        !title.en &&
+        !description.ar &&
+        !description.en &&
+        !icon
+    ) {
+        return null;
+    }
+
+    return {
+        title,
+        description,
+        icon,
+    };
+}
+
+function normalizeAboutSection(
+    value: unknown,
+): ExhibitionAboutSection {
+    if (!value || typeof value !== "object") {
+        return {
+            cards: [],
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    const cards = Array.isArray(data.cards)
+        ? data.cards
+            .map(normalizeAboutCard)
+            .filter(
+                (
+                    card,
+                ): card is ExhibitionAboutCard =>
+                    card !== null,
+            )
+        : [];
+
+    return {
+        cards,
+    };
+}
+
+function normalizeGallery(
+    value: unknown,
+): ExhibitionMedia[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .map((item): ExhibitionMedia | null => {
+            const image = normalizeImage(item);
+
+            if (!image) {
+                return null;
+            }
+
+            const url = image.url.toLowerCase();
+
+            const isVideo =
+                url.includes("/video/upload/") ||
+                /\.(mp4|webm|mov|m4v)(\?|$)/i.test(
+                    url,
+                );
+
+            return {
+                ...image,
+                type: isVideo
+                    ? "video"
+                    : "image",
+            };
+        })
+        .filter(
+            (
+                item,
+            ): item is ExhibitionMedia =>
+                item !== null,
+        );
+}
+
+function normalizeSpeaker(
+    value: unknown,
+    index: number,
+): ExhibitionSpeaker | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    const name = normalizeLocalizedText(
+        data.name ?? data.title,
+    );
+
+    const title = normalizeLocalizedText(
+        data.title ??
+        data.job_title ??
+        data.role,
+    );
+
+    const image = normalizeImage(
+        data.image ??
+        data.photo ??
+        data.avatar,
+    );
+
+    const id =
+        typeof data.id === "string"
+            ? data.id
+            : String(index);
+
+    if (
+        !name.ar &&
+        !name.en &&
+        !title.ar &&
+        !title.en &&
+        !image
+    ) {
+        return null;
+    }
+
+    return {
+        id,
+        name,
+        title,
+        image,
+    };
+}
+
+function normalizeSpeakers(
+    value: unknown,
+): ExhibitionSpeaker[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .map((item, index) =>
+            normalizeSpeaker(item, index),
+        )
+        .filter(
+            (
+                speaker,
+            ): speaker is ExhibitionSpeaker =>
+                speaker !== null,
+        );
+}
+
+function normalizePartner(
+    value: unknown,
+    index: number,
+): ExhibitionPartner | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    const logo = normalizeImage(
+        data.logo ??
+        data.image ??
+        data,
+    );
+
+    if (!logo) {
+        return null;
+    }
+
+    const nameValue =
+        data.name ??
+        data.title;
+
+    const name =
+        nameValue &&
+        typeof nameValue === "object"
+            ? normalizeLocalizedText(nameValue)
+            : undefined;
+
+    return {
+        id:
+            typeof data.id === "string"
+                ? data.id
+                : String(index),
+        name,
+        logo,
+    };
+}
+
+function normalizePartners(
+    value: unknown,
+): ExhibitionPartner[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .map((item, index) =>
+            normalizePartner(item, index),
+        )
+        .filter(
+            (
+                partner,
+            ): partner is ExhibitionPartner =>
+                partner !== null,
+        );
+}
+
+function normalizePortfolioPdf(
+    value: unknown,
+): Exhibition["portfolio_pdf"] {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.url !== "string" ||
+        !data.url.trim()
+    ) {
+        return null;
+    }
+
+    return {
+        public_id:
+            typeof data.public_id === "string"
+                ? data.public_id
+                : "",
+        url: data.url,
+        original_filename:
+            typeof data.original_filename === "string"
+                ? data.original_filename
+                : undefined,
+        format:
+            typeof data.format === "string"
+                ? data.format
+                : undefined,
+        bytes:
+            typeof data.bytes === "number"
+                ? data.bytes
+                : undefined,
+    };
+}
+
+export function normalizeExhibition(
+    id: string,
+    data: FirebaseFirestore.DocumentData,
+): Exhibition {
+    const startDate =
+        normalizeDate(data.start_date) ?? "";
+
+    const endDate =
+        normalizeDate(data.end_date) ?? "";
+
+    return {
+        id,
+
+        slug:
+            typeof data.slug === "string"
+                ? data.slug
+                : id,
+
+        title: normalizeLocalizedText(
+            data.title,
+        ),
+
+        description:
+            normalizeLocalizedText(
+                data.description,
+            ),
+
+        meta: normalizeLocalizedText(
+            data.meta,
+        ),
+
+        start_date: startDate,
+        end_date: endDate,
+
+        location: normalizeLocation(
+            data.location,
+        ),
+
+        category_ids:
+            Array.isArray(data.category_ids)
+                ? data.category_ids.filter(
+                    (
+                        value: unknown,
+                    ): value is string =>
+                        typeof value === "string",
+                )
+                : [],
+
+        sector_ids:
+            Array.isArray(data.sector_ids)
+                ? data.sector_ids.filter(
+                    (
+                        value: unknown,
+                    ): value is string =>
+                        typeof value === "string",
+                )
+                : [],
+
+        series_id:
+            typeof data.series_id === "string"
+                ? data.series_id
+                : "",
+
+        speakers: normalizeSpeakers(
+            data.speakers,
+        ),
+
+        partners: normalizePartners(
+            data.partners,
+        ),
+
+        stats: normalizeStats(
+            data.stats,
+        ),
+
+        about_section:
+            normalizeAboutSection(
+                data.about_section,
+            ),
+
+        main_image:
+            normalizeImage(
+                data.main_image,
+            ),
+
+        main_video:
+            normalizeImage(
+                data.main_video,
+            ),
+
+        exhibition_logo:
+            normalizeImage(
+                data.exhibition_logo,
+            ),
+
+        portfolio_pdf:
+            normalizePortfolioPdf(
+                data.portfolio_pdf,
+            ),
+
+        gallery:
+            normalizeGallery(
+                data.gallery,
+            ),
+
+        is_active:
+            data.is_active !== false,
+
+        version:
+            typeof data.version === "string"
+                ? data.version
+                : "",
+
+        created_at:
+            normalizeDate(
+                data.created_at,
+            ),
+
+        updated_at:
+            normalizeDate(
+                data.updated_at,
+            ),
+    };
+}
+
+export async function getExhibitions(): Promise<Exhibition[]> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("exhibitions")
+        .get();
+
+    const exhibitions = snapshot.docs
+        .map((doc) =>
+            normalizeExhibition(
+                doc.id,
+                doc.data(),
+            ),
+        )
+        .filter(
+            (exhibition) =>
+                exhibition.is_active,
+        );
+
+    return exhibitions.sort((a, b) =>
+        b.start_date.localeCompare(
+            a.start_date,
+        ),
+    );
+}
+
+export async function getExhibitionById(
+    id: string,
+): Promise<Exhibition | null> {
+    "use cache";
+
+    if (!id) {
+        return null;
+    }
+
+    const doc = await adminDb
+        .collection("exhibitions")
+        .doc(id)
+        .get();
+
+    if (!doc.exists) {
+        return null;
+    }
+
+    const exhibition =
+        normalizeExhibition(
+            doc.id,
+            doc.data() ?? {},
+        );
+
+    if (!exhibition.is_active) {
+        return null;
+    }
+
+    return exhibition;
+}
+
+export async function getExhibitionBySlug(
+    slug: string,
+): Promise<Exhibition | null> {
+    "use cache";
+
+    if (!slug) {
+        return null;
+    }
+
+    const snapshot = await adminDb
+        .collection("exhibitions")
+        .where("slug", "==", slug)
+        .limit(1)
+        .get();
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    const doc = snapshot.docs[0];
+
+    const exhibition =
+        normalizeExhibition(
+            doc.id,
+            doc.data(),
+        );
+
+    if (!exhibition.is_active) {
+        return null;
+    }
+
+    return exhibition;
+}
+
+export async function getPreviousEditions(
+    currentExhibition: Exhibition,
+): Promise<Exhibition[]> {
+    "use cache";
+
+    if (
+        !currentExhibition.series_id ||
+        !currentExhibition.start_date
+    ) {
+        return [];
+    }
+
+    const exhibitions = await getExhibitions();
+
+    return exhibitions
+        .filter((exhibition) => {
+            if (
+                exhibition.id ===
+                currentExhibition.id
+            ) {
+                return false;
+            }
+
+            if (
+                exhibition.series_id !==
+                currentExhibition.series_id
+            ) {
+                return false;
+            }
+
+            if (!exhibition.end_date) {
+                return false;
+            }
+
+            return (
+                exhibition.end_date <
+                currentExhibition.start_date
+            );
+        })
+        .sort((a, b) =>
+            b.start_date.localeCompare(
+                a.start_date,
+            ),
+        );
+}
+
+==================================================
+FILE: lib\data\landingPage\getExhibitionSectors.ts
+==================================================
+import { adminDb } from "@/lib/firebase/admin";
+
+import type { ExhibitionSector } from "@/types/landingPage/sector";
+
+interface SectorDocument {
+    slug?: string;
+    title?: {
+        ar?: string;
+        en?: string;
+    };
+    meta_description?: {
+        ar?: string;
+        en?: string;
+    };
+    is_active?: boolean;
+    created_at?: {
+        toDate?: () => Date;
+    } | null;
+    updated_at?: {
+        toDate?: () => Date;
+    } | null;
+}
+
+function normalizeSector(
+    id: string,
+    data: SectorDocument,
+): ExhibitionSector {
+    return {
+        id,
+        slug: data.slug ?? "",
+        title: {
+            ar: data.title?.ar ?? "",
+            en: data.title?.en ?? "",
+        },
+        meta_description: {
+            ar: data.meta_description?.ar ?? "",
+            en: data.meta_description?.en ?? "",
+        },
+        is_active: data.is_active ?? false,
+        created_at:
+            data.created_at?.toDate?.()?.toISOString() ??
+            null,
+        updated_at:
+            data.updated_at?.toDate?.()?.toISOString() ??
+            null,
+    };
+}
+
+export async function getExhibitionSectors(
+    sectorIds: string[],
+): Promise<ExhibitionSector[]> {
+    "use cache";
+
+    if (!sectorIds.length) {
+        return [];
+    }
+
+    const uniqueIds = [
+        ...new Set(sectorIds),
+    ];
+
+    const snapshots = await Promise.all(
+        uniqueIds.map((id) =>
+            adminDb
+                .collection("exhibition_sectors")
+                .doc(id)
+                .get(),
+        ),
+    );
+
+    const sectorsById =
+        new Map<string, ExhibitionSector>();
+
+    snapshots.forEach((snapshot) => {
+        if (!snapshot.exists) {
+            return;
+        }
+
+        const data =
+            snapshot.data() as SectorDocument;
+
+        if (data.is_active === false) {
+            return;
+        }
+
+        sectorsById.set(
+            snapshot.id,
+            normalizeSector(
+                snapshot.id,
+                data,
+            ),
+        );
+    });
+
+    return sectorIds
+        .map((id) =>
+            sectorsById.get(id),
+        )
+        .filter(
+            (
+                sector,
+            ): sector is ExhibitionSector =>
+                Boolean(sector),
+        );
+}
+
+==================================================
+FILE: lib\data\services.ts
+==================================================
+// lib\data\services.ts
+import { adminDb } from "@/lib/firebase/admin";
+import type { Service, ServiceImage, LocalizedText } from "@/types/service";
+
+function normalizeImage(value: unknown): ServiceImage | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const image = value as Record<string, unknown>;
+
+    return {
+        public_id:
+            typeof image.public_id === "string"
+                ? image.public_id
+                : "",
+        url:
+            typeof image.url === "string"
+                ? image.url
+                : "",
+    };
+}
+
+function normalizeLocalizedText(value: unknown): LocalizedText {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const text = value as Record<string, unknown>;
+
+    return {
+        ar: typeof text.ar === "string" ? text.ar : "",
+        en: typeof text.en === "string" ? text.en : "",
+    };
+}
+
+function normalizeImages(value: unknown): ServiceImage[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value
+        .map(normalizeImage)
+        .filter((image): image is ServiceImage => Boolean(image?.url));
+}
+
+function normalizeLocalizedArray(value: unknown): LocalizedText[] {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    return value.map(normalizeLocalizedText);
+}
+
+function normalizeService(
+    id: string,
+    data: FirebaseFirestore.DocumentData
+): Service {
+    const content = data.content ?? {};
+    const main = content.main ?? {};
+    const features = main.features ?? {};
+    const introduction = content.introduction ?? {};
+    const usageFields = content.usageFields ?? {};
+
+    return {
+        id,
+        slug: typeof data.slug === "string" ? data.slug : "",
+        order: typeof data.order === "number" ? data.order : 999,
+
+        title: normalizeLocalizedText(data.title),
+
+        shortDescription: normalizeLocalizedText(
+            data.shortDescription
+        ),
+
+        mainDescription: normalizeLocalizedText(
+            data.mainDescription
+        ),
+
+        coverImage: normalizeImage(data.coverImage),
+
+        content: {
+            main: {
+                cta: normalizeLocalizedText(main.cta),
+
+                features: {
+                    title: normalizeLocalizedText(
+                        features.title
+                    ),
+
+                    description: normalizeLocalizedText(
+                        features.description
+                    ),
+
+                    items: normalizeLocalizedArray(
+                        features.items
+                    ),
+                },
+            },
+
+            introduction: {
+                title: normalizeLocalizedText(
+                    introduction.title
+                ),
+
+                description: normalizeLocalizedText(
+                    introduction.description
+                ),
+
+                images: normalizeImages(
+                    introduction.images
+                ),
+            },
+
+            usageFields: {
+                items: normalizeLocalizedArray(
+                    usageFields.items
+                ),
+
+                images: normalizeImages(
+                    usageFields.images
+                ),
+            },
+        },
+
+        gallery: normalizeImages(data.gallery),
+
+        usageFields: {
+            items: normalizeLocalizedArray(
+                data.usageFields?.items
+            ),
+
+            images: normalizeImages(
+                data.usageFields?.images
+            ),
+        },
+    };
+}
+
+export async function getServices(): Promise<Service[]> {
+    "use cache"
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("services")
+        .get();
+
+    if (!snapshot.exists) {
+        return [];
+    }
+
+    const data = snapshot.data();
+
+    const services = (data?.services ?? []) as Record<string, unknown>[];
+
+    return services
+        .map((service) =>
+            normalizeService(
+                String(service.id ?? ""),
+                service
+            )
+        )
+        .sort((a, b) => a.order - b.order);
+}
+
+==================================================
+FILE: lib\data\services\getServiceBySlug.ts
+==================================================
+// lib\data\services\getServiceBySlug.ts
+import type { ServiceItem } from "@/types/services/services";
+import { getServicesData } from "./getServicesData";
+
+export async function getServiceBySlug(
+    slug: string,
+): Promise<ServiceItem | null> {
+    "use cache";
+
+    if (!slug) {
+        return null;
+    }
+
+    const data = await getServicesData();
+
+    if (!Array.isArray(data?.services)) {
+        return null;
+    }
+
+    return (
+        data.services.find((item) => item?.slug === slug) ?? null
+    );
+}
+
+==================================================
+FILE: lib\data\services\getServicesData.ts
+==================================================
+// lib\data\services\getServicesData.ts
+import { adminDb } from "@/lib/firebase/admin";
+import type { ServicesData } from "@/types/services/services";
+
+function serializeFirestoreData(value: unknown): unknown {
+    if (value === null || value === undefined) {
+        return value;
+    }
+
+    if (value instanceof Date) {
+        return value.toISOString();
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(serializeFirestoreData);
+    }
+
+    if (typeof value !== "object") {
+        return value;
+    }
+
+    const objectValue = value as Record<string, unknown>;
+
+    // Firestore Timestamp instance
+    if (typeof objectValue.toDate === "function") {
+        return (objectValue.toDate as () => Date)().toISOString();
+    }
+
+    // Firestore Timestamp represented by its internal fields
+    const seconds =
+        typeof objectValue._seconds === "number"
+            ? objectValue._seconds
+            : objectValue.seconds;
+
+    const nanoseconds =
+        typeof objectValue._nanoseconds === "number"
+            ? objectValue._nanoseconds
+            : objectValue.nanoseconds;
+
+    if (
+        typeof seconds === "number" &&
+        typeof nanoseconds === "number"
+    ) {
+        return new Date(
+            seconds * 1000 + nanoseconds / 1_000_000,
+        ).toISOString();
+    }
+
+    // Convert nested objects into regular plain objects
+    return Object.fromEntries(
+        Object.entries(objectValue).map(([key, nestedValue]) => [
+            key,
+            serializeFirestoreData(nestedValue),
+        ]),
+    );
+}
+
+export async function getServicesData(): Promise<ServicesData | null> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("site_content")
+        .doc("services")
+        .get();
+
+    if (!snapshot.exists) {
+        return null;
+    }
+
+    const data = snapshot.data();
+
+    if (!data) {
+        return null;
+    }
+
+    return serializeFirestoreData(data) as ServicesData;
+}
+
+==================================================
+FILE: lib\data\siteSettings.ts
+==================================================
+// lib\data\siteSettings.ts
+import { adminDb } from "@/lib/firebase/admin";
+import type {
+    ContactEmail,
+    ContactPhone,
+    ContactSettings,
+    LocalizedText,
+    SocialLink,
+    SocialSettings,
+} from "@/types/siteSettings";
+
+function normalizeLocalizedText(
+    value: unknown
+): LocalizedText {
+    if (!value || typeof value !== "object") {
+        return {
+            ar: "",
+            en: "",
+        };
+    }
+
+    const data = value as Record<string, unknown>;
+
+    return {
+        ar: typeof data.ar === "string" ? data.ar : "",
+        en: typeof data.en === "string" ? data.en : "",
+    };
+}
+
+function normalizePhone(
+    value: unknown
+): ContactPhone | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.id !== "string" ||
+        typeof data.number !== "string"
+    ) {
+        return null;
+    }
+
+    return {
+        id: data.id,
+        label:
+            typeof data.label === "string"
+                ? data.label
+                : "",
+        number: data.number,
+        active: data.active === true,
+    };
+}
+
+function normalizeEmail(
+    value: unknown
+): ContactEmail | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.id !== "string" ||
+        typeof data.address !== "string"
+    ) {
+        return null;
+    }
+
+    const location =
+        data.location &&
+        typeof data.location === "object"
+            ? normalizeLocalizedText(data.location)
+            : undefined;
+
+    return {
+        id: data.id,
+        label:
+            typeof data.label === "string"
+                ? data.label
+                : "",
+        email: data.address,
+        active: data.active === true,
+        location,
+        mapUrl:
+            typeof data.mapUrl === "string"
+                ? data.mapUrl
+                : "",
+    };
+}
+
+function normalizeSocial(
+    value: unknown
+): SocialLink | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const data = value as Record<string, unknown>;
+
+    if (
+        typeof data.id !== "string" ||
+        typeof data.platform !== "string" ||
+        typeof data.url !== "string"
+    ) {
+        return null;
+    }
+
+    return {
+        id: data.id,
+        label:
+            typeof data.label === "string"
+                ? data.label
+                : "",
+        platform: data.platform,
+        url: data.url,
+        active: data.active === true,
+    };
+}
+
+export async function getContactSettings(): Promise<ContactSettings> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("site_settings")
+        .doc("settings_contact")
+        .get();
+
+    if (!snapshot.exists) {
+        return {
+            phones: [],
+            emails: [],
+            workingHours: {
+                ar: "",
+                en: "",
+            },
+        };
+    }
+
+    const data = snapshot.data() ?? {};
+
+    const phones = Array.isArray(data.phones)
+        ? data.phones
+            .map(normalizePhone)
+            .filter(
+                (
+                    phone
+                ): phone is ContactPhone =>
+                    phone !== null
+            )
+            .filter((phone) => phone.active)
+        : [];
+
+    const emails = Array.isArray(data.emails)
+        ? data.emails
+            .map(normalizeEmail)
+            .filter(
+                (
+                    email
+                ): email is ContactEmail =>
+                    email !== null
+            )
+            .filter((email) => email.active)
+        : [];
+
+    return {
+        phones,
+        emails,
+        workingHours: normalizeLocalizedText(
+            data.workingHours
+        ),
+    };
+}
+
+export async function getSocialSettings(): Promise<SocialSettings> {
+    "use cache"
+    const snapshot = await adminDb
+        .collection("site_settings")
+        .doc("settings_social")
+        .get();
+
+    if (!snapshot.exists) {
+        return {
+            socials: [],
+        };
+    }
+
+    const data = snapshot.data();
+
+    const socials = Array.isArray(data?.socials)
+        ? data.socials
+            .map(normalizeSocial)
+            .filter(
+                (
+                    social
+                ): social is SocialLink =>
+                    social !== null
+            )
+            .filter((social) => social.active)
+        : [];
+
+    return {
+        socials,
+    };
+}
+
+==================================================
+FILE: lib\data\theme.ts
+==================================================
+
+import "server-only";
+
+import { adminDb } from "@/lib/firebase/admin";
+import type { HomepageSettings } from "@/lib/data/homepage";
+import type { ThemeSettings } from "@/types/theme";
+
+const themeFields: (keyof ThemeSettings)[] = [
+    "arabicFont",
+    "englishFont",
+    "backgroundColor",
+    "primaryColor",
+    "secondaryColor",
+    "textColor",
+];
+
+type ThemeDocumentData = {
+    company: ThemeSettings;
+    exhibitions: Record<string, Partial<ThemeSettings>>;
+};
+
+/* Validate Plain Object */
+function isThemeObject(
+    value: unknown
+): value is Record<string, unknown> {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+    );
+}
+
+/* Normalize Complete Theme */
+function normalizeTheme(value: unknown): ThemeSettings {
+    if (!isThemeObject(value)) {
+        throw new Error("Invalid theme data received from Firestore.");
+    }
+
+    const theme = {} as ThemeSettings;
+
+    for (const field of themeFields) {
+        const fieldValue = value[field];
+
+        if (
+            typeof fieldValue !== "string" ||
+            !fieldValue.trim()
+        ) {
+            throw new Error(
+                `Theme is missing required field: ${field}`
+            );
+        }
+
+        theme[field] = fieldValue;
+    }
+
+    return theme;
+}
+
+/* Normalize Partial Theme */
+function normalizePartialTheme(
+    value: unknown
+): Partial<ThemeSettings> {
+    if (!isThemeObject(value)) {
+        return {};
+    }
+
+    const theme: Partial<ThemeSettings> = {};
+
+    for (const field of themeFields) {
+        const fieldValue = value[field];
+
+        if (
+            typeof fieldValue === "string" &&
+            fieldValue.trim()
+        ) {
+            theme[field] = fieldValue;
+        }
+    }
+
+    return theme;
+}
+
+/* Get Theme Document */
+async function getThemeDocument(): Promise<ThemeDocumentData> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("site_settings")
+        .doc("settings_themes")
+        .get();
+
+    if (!snapshot.exists) {
+        throw new Error("Theme settings document not found.");
+    }
+
+    const data = snapshot.data();
+
+    if (!data) {
+        throw new Error("Theme settings data is empty.");
+    }
+
+    const company = normalizeTheme(data.company);
+
+    const rawExhibitions = isThemeObject(data.exhibitions)
+        ? data.exhibitions
+        : {};
+
+    const exhibitions: Record<string, Partial<ThemeSettings>> = {};
+
+    for (const [id, value] of Object.entries(rawExhibitions)) {
+        exhibitions[id] = normalizePartialTheme(value);
+    }
+
+    // Return only normalized plain objects.
+    // Firestore metadata such as updated_at is intentionally excluded.
+    return {
+        company,
+        exhibitions,
+    };
+}
+
+/* Get Company Theme */
+function getCompanyTheme(
+    data: ThemeDocumentData
+): ThemeSettings {
+    return data.company;
+}
+
+/* Get Exhibition Theme */
+function getExhibitionTheme(
+    data: ThemeDocumentData,
+    exhibitionId: string
+): Partial<ThemeSettings> | null {
+    if (!exhibitionId) return null;
+
+    return data.exhibitions[exhibitionId] ?? null;
+}
+
+/* Get Active Theme */
+export async function getActiveTheme(
+    settings: HomepageSettings
+): Promise<ThemeSettings> {
+    const data = await getThemeDocument();
+
+    const companyTheme = getCompanyTheme(data);
+
+    const exhibitionTheme = getExhibitionTheme(
+        data,
+        settings.exhibition_id
+    );
+
+    if (settings.mode === "exhibition" && exhibitionTheme) {
+        return {
+            ...companyTheme,
+            ...exhibitionTheme,
+        };
+    }
+
+    return companyTheme;
+}
+
+
+==================================================
+FILE: next.config.ts
+==================================================
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  experimental: {
+    agentFeedback: true,
+  },
+  cacheComponents: true,
+  partialPrefetching: true,
+  turbopack: {
+    rules: {
+      "*.css": {
+        loaders: ["@tailwindcss/turbopack"],
+        as: "*.css",
+      },
+    },
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/dw8nuv7r8/image/upload/**",
+      },
+    ],
+  },
+};
+
+export default nextConfig;
+
+
+==================================================
+FILE: package.json
+==================================================
+{
+  "name": "event-maker-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^7.0.1",
+    "firebase-admin": "^14.5.0",
+    "next": "16.4.2",
+    "nodemailer": "^10.4.0",
+    "qrcode": "^1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "^7.91.0",
+    "react-icons": "^5.7.0",
+    "swiper": "^14.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.2",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}
+
+
+==================================================
+FILE: proxy.ts
+==================================================
+// proxy.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+const locales = ["ar", "en"] as const;
+
+export function proxy(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+
+    // Ignore Next.js internals and public files
+    if (
+        pathname.startsWith("/_next") ||
+        pathname.startsWith("/api") ||
+        pathname.includes(".")
+    ) {
+        return NextResponse.next();
+    }
+
+    let locale = "ar";
+
+    // English URLs
+    if (pathname === "/en" || pathname.startsWith("/en/")) {
+        locale = "en";
+    }
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-locale", locale);
+
+    // English already matches the [locale] route
+    if (locale === "en") {
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        });
+    }
+
+    // Arabic is the default locale.
+    // Rewrite the public Arabic URL internally to /ar/...
+    const url = request.nextUrl.clone();
+
+    if (pathname === "/") {
+        url.pathname = "/ar";
+    } else {
+        url.pathname = `/ar${pathname}`;
+    }
+
+    return NextResponse.rewrite(url, {
+        request: {
+            headers: requestHeaders,
+        },
+    });
+}
+
+export const config = {
+    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};

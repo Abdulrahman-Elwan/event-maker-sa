@@ -1,26 +1,193 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --theme-primary: #e8b85c;
+  --theme-secondary: #0f172a;
+  --theme-background: #ffffff;
+  --theme-text: #0f172a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+}
+
+html[lang="ar"] body {
+  font-family: var(--theme-font-ar), sans-serif;
+}
+
+html[lang="en"] body {
+  font-family: var(--theme-font-en), sans-serif;
+}
+
+/* ================================
+   Hero Animations
+================================ */
+
+@keyframes hero-image-enter {
+  from {
+    transform: scale(1.06);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes hero-eyebrow-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-description-enter {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-buttons-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-image-active {
+  animation: hero-image-enter 1.4s ease-out both;
+}
+
+.hero-content-eyebrow {
+  animation: hero-eyebrow-enter 0.7s ease-out 0.1s both;
+}
+
+.hero-content-title {
+  animation: hero-title-enter 0.75s ease-out 0.2s both;
+}
+
+.hero-content-description {
+  animation: hero-description-enter 0.7s ease-out 0.35s both;
+}
+
+.hero-content-buttons {
+  animation: hero-buttons-enter 0.7s ease-out 0.5s both;
+}
+
+/* ================================
+   Reduced Motion - Hero
+================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-image-active,
+  .hero-content-eyebrow,
+  .hero-content-title,
+  .hero-content-description,
+  .hero-content-buttons {
+    animation: none;
+  }
+}
+
+/* Partners infinite marquee */
+/* Partners Marquee */
+
+.partners-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.partners-track-left {
+  animation: partners-marquee-left 32s linear infinite;
+}
+
+.partners-track-right {
+  animation: partners-marquee-right 32s linear infinite;
+}
+
+.partners-track-left:hover,
+.partners-track-right:hover {
+  animation-play-state: paused;
+}
+
+@keyframes partners-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes partners-marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partners-track-left,
+  .partners-track-right {
+    animation: none;
+    transform: translateX(0);
+  }
+}
+
+/* Exhibition Partners Slider */
+
+.exhibition-partners-track {
+  animation: exhibition-partners-scroll 35s linear infinite;
+}
+
+.exhibition-partners-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes exhibition-partners-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exhibition-partners-track {
+    animation: none;
+  }
 }
