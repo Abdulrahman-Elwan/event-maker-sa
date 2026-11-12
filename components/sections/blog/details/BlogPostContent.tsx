@@ -1,3 +1,4 @@
+
 import type { Locale } from "@/lib/i18n/config";
 import type { BlogPost } from "@/types/blog";
 
@@ -12,10 +13,49 @@ interface HeadingItem {
     level: number;
 }
 
-
-function cleanBlogContent(html: string): string {
+function cleanBlogContent(
+    html: string,
+    postTitle: string
+): string {
     if (!html) return "";
+
     let content = html;
+
+    // Prepare article title for safe HTML attribute insertion
+    const safeTitle = postTitle
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    // Add article title to images with missing or empty alt attributes
+    content = content.replace(
+        /<img\b[^>]*>/gi,
+        (imageTag) => {
+            const altMatch = imageTag.match(
+                /\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
+            );
+
+            if (!altMatch) {
+                return imageTag.replace(
+                    /<img\b/i,
+                    `<img alt="${safeTitle}"`
+                );
+            }
+
+            const currentAlt =
+                altMatch[1] ?? altMatch[2] ?? altMatch[3] ?? "";
+
+            if (!currentAlt.trim()) {
+                return imageTag.replace(
+                    /\balt\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i,
+                    `alt="${safeTitle}"`
+                );
+            }
+
+            return imageTag;
+        }
+    );
 
     content = content
         .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
@@ -31,8 +71,8 @@ function cleanBlogContent(html: string): string {
     );
 
     content = content.replace(
-        /<(h[1-6])\b([^>]*)>([\s\S]*?)<\/\1>/gi,
-        (_match, tag, attributes, innerContent) => {
+        /(h[1-6])\b([^>]*)>([\s\S]*?)<\/\1>/gi,
+        (match, tag, attributes, innerContent) => {
             const cleanHeading = innerContent
                 .replace(/<span\b[^>]*>/gi, "")
                 .replace(/<\/span>/gi, "");
@@ -58,7 +98,6 @@ function cleanBlogContent(html: string): string {
 
     return content;
 }
-
 
 function extractHeadings(html: string): HeadingItem[] {
     const headings: HeadingItem[] = [];
@@ -111,11 +150,7 @@ function addHeadingIds(
 
             index += 1;
 
-            if (
-                /\sid=["'][^"']*["']/i.test(
-                    attributes
-                )
-            ) {
+            if (/\sid=["'][^"']*["']/i.test(attributes)) {
                 return match;
             }
 
@@ -133,7 +168,13 @@ export default function BlogPostContent({
     const rawContent =
         post.content[locale] || post.content.ar;
 
-    const content = cleanBlogContent(rawContent);
+    const postTitle =
+        post.title[locale] || post.title.ar;
+
+    const content = cleanBlogContent(
+        rawContent,
+        postTitle
+    );
 
     const headings = extractHeadings(content);
 
@@ -144,7 +185,10 @@ export default function BlogPostContent({
 
     return (
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:px-10 lg:py-20">
-            <article dir={isArabic ? "rtl" : "ltr"} className="min-w-0 text-(--theme-text)" >
+            <article
+                dir={isArabic ? "rtl" : "ltr"}
+                className="min-w-0 text-(--theme-text)"
+            >
                 <div
                     className="
                         text-base leading-8 text-(--theme-text)/80
@@ -183,7 +227,10 @@ export default function BlogPostContent({
             </article>
 
             {headings.length > 0 && (
-                <aside className="lg:sticky hidden lg:block lg:top-28 lg:self-start" dir={isArabic ? "rtl" : "ltr"} >
+                <aside
+                    className="lg:sticky hidden lg:block lg:top-28 lg:self-start"
+                    dir={isArabic ? "rtl" : "ltr"}
+                >
                     <div className="rounded-2xl border border-(--theme-secondary)/10 bg-(--theme-backgroundColor) p-6">
                         <div className="relative mb-5 flex items-center justify-between gap-4">
                             <h2 className="text-base font-bold text-(--theme-text) ps-1.5">
@@ -192,27 +239,31 @@ export default function BlogPostContent({
                                     : "Table of Contents"}
                             </h2>
 
-                            <span className={`absolute ${isArabic ? '-right-2' : '-left-2'} h-10 w-1 rounded-full bg-(--theme-primary)`} />
+                            <span
+                                className={`absolute ${isArabic ? "-right-2" : "-left-2"
+                                    } h-10 w-1 rounded-full bg-(--theme-primary)`}
+                            />
                         </div>
 
                         <nav>
                             <ol className="space-y-1">
-                                {headings.map(
-                                    (heading, index) => (
-                                        <li key={heading.id}>
-                                            <a
-                                                href={`#${heading.id}/`}
-                                                className={`block border-s-2 border-transparent py-2.5 text-sm leading-6 text-(--theme-text)/80 transitionhover:border-(--theme-primary) hover:text-(--theme-primary)${heading.level === 3 ? "ps-5 text-xs" : "ps-3"}`}
-                                            >
-                                                <span className="me-2 text-(--theme-primary)/85">
-                                                    {String(index + 1).padStart(2, "0")}
-                                                </span>
+                                {headings.map((heading, index) => (
+                                    <li key={heading.id}>
+                                        <a
+                                            href={`#${heading.id}`}
+                                            className={`block border-s-2 border-transparent py-2.5 text-sm leading-6 text-(--theme-text)/80 transition hover:border-(--theme-primary) hover:text-(--theme-primary)${heading.level === 3
+                                                    ? " ps-5 text-xs"
+                                                    : " ps-3"
+                                                }`}
+                                        >
+                                            <span className="me-2 text-(--theme-primary)/85">
+                                                {String(index + 1).padStart(2, "0")}
+                                            </span>
 
-                                                {heading.text}
-                                            </a>
-                                        </li>
-                                    )
-                                )}
+                                            {heading.text}
+                                        </a>
+                                    </li>
+                                ))}
                             </ol>
                         </nav>
                     </div>
