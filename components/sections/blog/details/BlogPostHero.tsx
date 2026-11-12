@@ -104,8 +104,8 @@ export default function BlogPostHero({
                         <Link
                             href={
                                 locale === "ar"
-                                    ? "/blog"
-                                    : "/en/blog"
+                                    ? "/blog/"
+                                    : "/en/blog/"
                             }
                             className="inline-flex items-center gap-2 text-white/70 transition hover:text-(--theme-primary)"
                         >

@@ -10,7 +10,7 @@ import { getBlogPosts } from "@/lib/data/blog/getBlogPosts";
 import BlogHero from "@/components/sections/blog/BlogHero";
 import BlogFilters from "@/components/sections/blog/BlogFilters";
 import BlogPostsSection from "@/components/sections/blog/BlogPostsSection";
-import { SITE_URL, absoluteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
 
 const BLOG_SEO_FALLBACK: Record<
     Locale,
@@ -120,8 +120,8 @@ export async function generateMetadata({
             : fallback.keywords;
 
     const BLOG_URLS = {
-        ar: absoluteUrl("/blog"),
-        en: absoluteUrl("/en/blog"),
+        ar: absoluteUrl("/blog/"),
+        en: absoluteUrl("/en/blog/"),
     } as const;
 
     const canonicalUrl = BLOG_URLS[currentLocale];

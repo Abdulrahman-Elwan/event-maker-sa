@@ -35,48 +35,79 @@ export default function Navbar({ locale }: NavbarProps) {
   const navItems = [
     {
       label: t.nav.home,
-      href: isArabic ? "/" : "/en",
+      href: isArabic ? "/" : "/en/",
     },
     {
       label: t.nav.about,
-      href: isArabic ? "/about" : "/en/about",
+      href: isArabic ? "/about/" : "/en/about/",
     },
     {
       label: t.nav.services,
-      href: isArabic ? "/services" : "/en/services",
+      href: isArabic ? "/services/" : "/en/services/",
     },
     {
       label: t.nav.exhibitions,
-      href: isArabic ? "/exhibitions" : "/en/exhibitions",
+      href: isArabic ? "/exhibitions/" : "/en/exhibitions/",
     },
     {
       label: t.nav.blog,
-      href: isArabic ? "/blog" : "/en/blog",
+      href: isArabic ? "/blog/" : "/en/blog/",
     },
     {
       label: t.nav.contact,
-      href: isArabic ? "/contact" : "/en/contact",
+      href: isArabic ? "/contact/" : "/en/contact/",
     },
   ];
 
-  const cleanPath = pathname.replace(/^\/en(?=\/|$)/, "") || "/";
+
+  const pathSegments = pathname.split("/").filter(Boolean);
+
+  // Remove locale prefixes to get the public path.
+  while (
+    pathSegments.length > 0 &&
+    (pathSegments[0] === "ar" || pathSegments[0] === "en")
+  ) {
+    pathSegments.shift();
+  }
+
+  const cleanPath = pathSegments.length
+    ? `/${pathSegments.join("/")}/`
+    : "/";
 
   const languageHref =
     locale === "ar"
       ? cleanPath === "/"
-        ? "/en"
+        ? "/en/"
         : `/en${cleanPath}`
       : cleanPath;
 
-  const profileHref = isArabic ? "/company-profile" : "/en/company-profile";
+  const profileHref = isArabic ? "/company-profile/" : "/en/company-profile/";
   function closeMenu() {
     setIsMenuOpen(false);
   }
 
+  function normalizeComparablePath(path: string) {
+    const segments = path.split("/").filter(Boolean);
+
+    while (
+      segments.length > 0 &&
+      (segments[0] === "ar" || segments[0] === "en")
+    ) {
+      segments.shift();
+    }
+
+    return segments.length
+      ? `/${segments.join("/")}/`
+      : "/";
+  }
+
   function isActive(href: string) {
+    const currentPath = normalizeComparablePath(pathname);
+    const targetPath = normalizeComparablePath(href);
+
     return (
-      href === pathname ||
-      (href !== (isArabic ? "/" : "/en") && pathname.startsWith(`${href}/`))
+      currentPath === targetPath ||
+      (targetPath !== "/" && currentPath.startsWith(targetPath))
     );
   }
 
@@ -88,7 +119,7 @@ export default function Navbar({ locale }: NavbarProps) {
       <nav className="mx-auto flex min-h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
         {/* Logo */}
         <Link
-          href={isArabic ? "/" : "/en"}
+          href={isArabic ? "/" : "/en/"}
           onClick={closeMenu}
           dir="ltr"
           className="flex shrink-0 items-center gap-1"
@@ -123,15 +154,14 @@ export default function Navbar({ locale }: NavbarProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`relative rounded-full px-4 py-2 text-[14px] font-medium transition-all duration-200 ${
-                  active
-                    ? isScrolled
-                      ? "bg-slate-100 text-slate-900"
-                      : "bg-white/15 text-white"
-                    : isScrolled
-                      ? "text-white hover:bg-slate-100 hover:text-slate-950"
-                      : "text-white hover:bg-white/10 hover:text-white"
-                }`}
+                className={`relative rounded-full px-4 py-2 text-[14px] font-medium transition-all duration-200 ${active
+                  ? isScrolled
+                    ? "bg-slate-100 text-slate-900"
+                    : "bg-white/15 text-white"
+                  : isScrolled
+                    ? "text-white hover:bg-slate-100 hover:text-slate-950"
+                    : "text-white hover:bg-white/10 hover:text-white"
+                  }`}
               >
                 {item.label}
               </Link>
@@ -204,15 +234,14 @@ export default function Navbar({ locale }: NavbarProps) {
                   key={item.href}
                   href={item.href}
                   onClick={closeMenu}
-                  className={`rounded-xl px-4 py-3 text-[15px] font-medium transition-all ${
-                    active
-                      ? isScrolled
-                        ? "bg-slate-900 text-white"
-                        : "bg-white/15 text-white"
-                      : isScrolled
-                        ? "text-slate-700 hover:bg-slate-100"
-                        : "text-white/85 hover:bg-white/10 hover:text-white"
-                  }`}
+                  className={`rounded-xl px-4 py-3 text-[15px] font-medium transition-all ${active
+                    ? isScrolled
+                      ? "bg-slate-900 text-white"
+                      : "bg-white/15 text-white"
+                    : isScrolled
+                      ? "text-slate-700 hover:bg-slate-100"
+                      : "text-white/85 hover:bg-white/10 hover:text-white"
+                    }`}
                 >
                   {item.label}
                 </Link>

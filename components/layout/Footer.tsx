@@ -14,7 +14,6 @@ import {
   FiYoutube,
 } from "react-icons/fi";
 import { FaTiktok, FaWhatsapp, FaXTwitter } from "react-icons/fa6";
-
 import type { Locale } from "@/lib/i18n/config";
 import type { ContactSettings, SocialLink } from "@/types/siteSettings";
 import { Service } from "@/types/service";
@@ -30,45 +29,35 @@ interface FooterProps {
   currentYear: number;
 }
 
-export default function Footer({
-  locale,
-  contact,
-  socials,
-  services,
-  currentYear,
-}: FooterProps) {
+export default function Footer({ locale, contact, socials, services, currentYear, }: FooterProps) {
   const isArabic = locale === "ar";
-
   const activePhones = contact.phones.filter((phone) => phone.active);
-
   const activeEmails = contact.emails.filter((email) => email.active);
-
   const activeSocials = socials.socials.filter((social) => social.active);
-
   const links = [
     {
       label: isArabic ? "الرئيسية" : "Home",
-      href: isArabic ? "/" : "/en",
+      href: isArabic ? "/" : "/en/",
     },
     {
       label: isArabic ? "من نحن" : "About Us",
-      href: isArabic ? "/about" : "/en/about",
+      href: isArabic ? "/about/" : "/en/about/",
     },
     {
       label: isArabic ? "خدماتنا" : "Services",
-      href: isArabic ? "/services" : "/en/services",
+      href: isArabic ? "/services/" : "/en/services/",
     },
     {
       label: isArabic ? "معارضنا" : "Exhibitions",
-      href: isArabic ? "/exhibitions" : "/en/exhibitions",
+      href: isArabic ? "/exhibitions/" : "/en/exhibitions/",
     },
     {
       label: isArabic ? "المدونة" : "Blog",
-      href: isArabic ? "/blog" : "/en/blog",
+      href: isArabic ? "/blog/" : "/en/blog/",
     },
     {
       label: isArabic ? "تواصل معنا" : "Contact Us",
-      href: isArabic ? "/contact" : "/en/contact",
+      href: isArabic ? "/contact/" : "/en/contact/",
     },
   ];
 
@@ -80,7 +69,7 @@ export default function Footer({
           {/* Brand */}
           <div>
             <Link
-              href={isArabic ? "/" : "/en"}
+              href={isArabic ? "/" : "/en/"}
               className="flex shrink-0 items-center gap-1"
               dir="rtl"
             >
@@ -159,8 +148,8 @@ export default function Footer({
                     <Link
                       href={
                         isArabic
-                          ? `/services/${service.slug}`
-                          : `/en/services/${service.slug}`
+                          ? `/services/${service.slug}/`
+                          : `/en/services/${service.slug}/`
                       }
                       className="group inline-flex items-center gap-2 text-sm text-slate-400 transition-colors duration-300 hover:text-white"
                     >
@@ -263,14 +252,14 @@ export default function Footer({
 
           <div className="flex items-center gap-5">
             <Link
-              href={isArabic ? "/terms" : "/en/terms"}
+              href={isArabic ? "/terms/" : "/en/terms/"}
               className="transition-colors hover:text-white"
             >
               {isArabic ? "الشروط والأحكام" : "Terms & Conditions"}
             </Link>
 
             <Link
-              href={isArabic ? "/privacy-policy" : "/en/privacy-policy"}
+              href={isArabic ? "/privacy-policy/" : "/en/privacy-policy/"}
               className="transition-colors hover:text-white"
             >
               {isArabic ? "سياسة الخصوصية" : "Privacy Policy"}

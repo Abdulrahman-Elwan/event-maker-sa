@@ -11,7 +11,7 @@ export async function generateMetadata({ params, }: PageProps): Promise<Metadata
     const isArabic = locale === "ar";
 
     const canonicalUrl = absoluteUrl(
-        isArabic ? "/terms" : "/en/terms"
+        isArabic ? "/terms/" : "/en/terms/"
     );
 
     return {
@@ -26,9 +26,9 @@ export async function generateMetadata({ params, }: PageProps): Promise<Metadata
         alternates: {
             canonical: canonicalUrl,
             languages: {
-                ar: absoluteUrl("/terms"),
-                en: absoluteUrl("/en/terms"),
-                "x-default": absoluteUrl("/terms"),
+                ar: absoluteUrl("/terms/"),
+                en: absoluteUrl("/en/terms/"),
+                "x-default": absoluteUrl("/terms/"),
             },
         },
     };

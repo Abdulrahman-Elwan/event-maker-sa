@@ -92,7 +92,7 @@ export default function AboutHero({
                     <Reveal delay={500} distance={20}>
                         <div className="mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
                             <Link
-                                href="#about-story"
+                                href="#about-story/"
                                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--theme-primary)] px-6 py-3.5 text-sm font-bold text-[#111827] shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                             >
                                 {isArabic ? "اكتشف قصتنا" : "Explore Our Story"}
@@ -103,7 +103,7 @@ export default function AboutHero({
                             </Link>
 
                             <Link
-                                href={isArabic ? "/contact" : "/en/contact"}
+                                href={isArabic ? "/contact/" : "/en/contact/"}
                                 className="inline-flex items-center justify-center rounded-full border border-white/35 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:border-white hover:bg-white/10"
                             >
                                 {isArabic ? "تواصل معنا" : "Contact Us"}

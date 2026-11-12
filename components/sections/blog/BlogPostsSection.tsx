@@ -28,7 +28,7 @@ export default function BlogPostsSection({
 }: BlogPostsSectionProps) {
     const isArabic = locale === "ar";
 
-    const basePath = isArabic ? "/blog" : "/en/blog";
+    const basePath = isArabic ? "/blog/" : "/en/blog/";
 
     // Normalize pagination values defensively.
     const safeTotalPages = Math.max(

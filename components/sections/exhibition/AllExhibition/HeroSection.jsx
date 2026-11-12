@@ -54,7 +54,7 @@ export default function HeroSection({
                     <Reveal delay={500} distance={20}>
                         <div className="mt-8 flex flex-wrap items-center gap-3 sm:mt-10">
                             <Link
-                                href="#exhibitions-list"
+                                href="#exhibitions-list/"
                                 className="group inline-flex items-center justify-center gap-3 rounded-full bg-(--theme-primary) px-6 py-3.5 text-sm font-bold text-(--theme-secondary) shadow-lg shadow-black/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                             >
                                 <span>
@@ -74,8 +74,8 @@ export default function HeroSection({
                             <Link
                                 href={
                                     isArabic
-                                        ? "/contact"
-                                        : "/en/contact"
+                                        ? "/contact/"
+                                        : "/en/contact/"
                                 }
                                 className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/50 hover:bg-white/10"
                             >

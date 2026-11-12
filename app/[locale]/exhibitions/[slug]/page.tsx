@@ -76,7 +76,7 @@ function getValidImageUrl(
 
 function getExhibitionUrl(locale: Locale, slug: string,): string {
     const encodedSlug = encodeURIComponent(slug);
-    const path = locale === "ar" ? `/exhibitions/${encodedSlug}` : `/en/exhibitions/${encodedSlug}`;
+    const path = locale === "ar" ? `/exhibitions/${encodedSlug}/` : `/en/exhibitions/${encodedSlug}/`;
 
     return absoluteUrl(path);
 }

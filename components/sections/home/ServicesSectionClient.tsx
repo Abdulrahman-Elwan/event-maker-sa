@@ -75,7 +75,7 @@ export default function ServicesSectionClient({
                                     {service.coverImage?.url && (
                                         <Image
                                             src={service.coverImage.url}
-                                            alt=""
+                                            alt={serviceTitle}
                                             fill
                                             sizes="(max-width: 1023px) 48px, 64px"
                                             className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -193,8 +193,8 @@ export default function ServicesSectionClient({
                                 <Link
                                     href={
                                         isArabic
-                                            ? `/services/${service.slug}`
-                                            : `/en/services/${service.slug}`
+                                            ? `/services/${service.slug}/`
+                                            : `/en/services/${service.slug}/`
                                     }
                                     className="group mt-5 inline-flex items-center gap-3 rounded-full px-5 py-3 text-sm font-semibold text-slate-950 transition-all duration-300 hover:brightness-110"
                                     style={{

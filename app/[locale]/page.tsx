@@ -26,7 +26,7 @@ export async function generateMetadata({ params, }: HomePageProps): Promise<Meta
 
     const currentLocale = locale as Locale;
     const isArabic = currentLocale === "ar";
-    const canonicalUrl = isArabic ? absoluteUrl("/") : absoluteUrl("/en");
+    const canonicalUrl = isArabic ? absoluteUrl("/") : absoluteUrl("/en/");
     const homepage = await getHomepageData();
 
     let title: string | undefined;
@@ -72,7 +72,7 @@ export async function generateMetadata({ params, }: HomePageProps): Promise<Meta
             canonical: canonicalUrl,
             languages: {
                 ar: absoluteUrl("/"),
-                en: absoluteUrl("/en"),
+                en: absoluteUrl("/en/"),
                 "x-default": absoluteUrl("/"),
             },
         },

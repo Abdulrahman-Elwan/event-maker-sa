@@ -245,7 +245,7 @@ export default function PreviousEditionStoryViewer({
                             {selectedExhibition.exhibition_logo?.url ? (
                                 <Image
                                     src={selectedExhibition.exhibition_logo.url}
-                                    alt=""
+                                    alt={getText(selectedExhibition.title, locale)}
                                     fill
                                     unoptimized
                                     className="object-cover"
@@ -253,7 +253,7 @@ export default function PreviousEditionStoryViewer({
                             ) : selectedExhibition.main_image?.url ? (
                                 <Image
                                     src={selectedExhibition.main_image.url}
-                                    alt=""
+                                    alt={getText(selectedExhibition.title, locale)}
                                     fill
                                     unoptimized
                                     className="object-cover"

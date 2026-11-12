@@ -161,8 +161,8 @@ export default function HeroSlider({
                         <Link
                             href={
                                 isArabic
-                                    ? `/${currentSlide.link1}`
-                                    : `/en/${currentSlide.link1}`
+                                    ? `/${currentSlide.link1}/`
+                                    : `/en/${currentSlide.link1}/`
                             }
                             className="group inline-flex h-11 items-center gap-3 rounded-full px-6 text-sm font-semibold text-slate-950 transition-all duration-300 hover:brightness-110 hover:shadow-lg sm:h-12 sm:px-7"
                             style={{
@@ -184,8 +184,8 @@ export default function HeroSlider({
                         <Link
                             href={
                                 isArabic
-                                    ? `/${currentSlide.link2}`
-                                    : `/en/${currentSlide.link2}`
+                                    ? `/${currentSlide.link2}/`
+                                    : `/en/${currentSlide.link2}/`
                             }
                             className="inline-flex h-11 items-center rounded-full border border-white/40 bg-white/5 px-6 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:border-white/70 hover:bg-white/10 sm:h-12 sm:px-7"
                         >

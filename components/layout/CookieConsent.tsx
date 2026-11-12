@@ -157,8 +157,8 @@ export default function CookieConsent({ locale }: CookieConsentProps) {
                                 <a
                                     href={
                                         isArabic
-                                            ? "/privacy-policy"
-                                            : "/en/privacy-policy"
+                                            ? "/privacy-policy/"
+                                            : "/en/privacy-policy/"
                                     }
                                     className="mt-2 inline-block text-sm font-semibold text-[var(--theme-primary)] underline underline-offset-4"
                                 >

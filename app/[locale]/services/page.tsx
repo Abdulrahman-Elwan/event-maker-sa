@@ -121,7 +121,7 @@ function getLocalizedKeywords(
 }
 
 function getServicesUrl(locale: Locale): string {
-    return locale === "ar" ? absoluteUrl("/services") : absoluteUrl("/en/services");
+    return locale === "ar" ? absoluteUrl("/services/") : absoluteUrl("/en/services/");
 }
 
 /* -------------------------------------------------------------------------- */

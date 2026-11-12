@@ -20,8 +20,8 @@ export async function generateMetadata({ params, }: PageProps): Promise<Metadata
         alternates: {
             canonical: absoluteUrl(
                 isArabic
-                    ? "/privacy-policy"
-                    : "/en/privacy-policy"
+                    ? "/privacy-policy/"
+                    : "/en/privacy-policy/"
             ),
         },
     };

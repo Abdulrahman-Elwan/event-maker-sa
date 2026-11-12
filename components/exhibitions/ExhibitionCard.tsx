@@ -60,12 +60,12 @@ export default function ExhibitionCard({
     const isUpcoming = status === "upcoming";
 
     const registerHref = isArabic
-        ? `/booking/general/${exhibition.slug}`
-        : `/en/booking/general/${exhibition.slug}`;
+        ? `/booking/general/${exhibition.slug}/`
+        : `/en/booking/general/${exhibition.slug}/`;
 
     const detailsHref = isArabic
-        ? `/exhibitions/${exhibition.slug}`
-        : `/en/exhibitions/${exhibition.slug}`;
+        ? `/exhibitions/${exhibition.slug}/`
+        : `/en/exhibitions/${exhibition.slug}/`;
 
     return (
         <article

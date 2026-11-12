@@ -21,8 +21,8 @@ export default function ServicesHero({
     const description = hero.description[locale];
 
     const contactHref = isArabic
-        ? "/contact"
-        : "/en/contact";
+        ? "/contact/"
+        : "/en/contact/";
 
     return (
         <section
@@ -101,7 +101,7 @@ export default function ServicesHero({
 
                             {/* Explore Services */}
                             <Link
-                                href="#services-list"
+                                href="#services-list/"
                                 className="inline-flex items-center justify-center gap-2 rounded-full bg-(--theme-primary) px-6 py-3.5 text-sm font-bold text-(--theme-secondary) shadow-lg shadow-black/15 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                             >
                                 {isArabic

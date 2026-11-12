@@ -16,7 +16,7 @@ import BlogPostShare from "@/components/sections/blog/details/BlogPostShare";
 import RelatedBlogPosts from "@/components/sections/blog/details/RelatedBlogPosts";
 import BlogPostCTA from "@/components/sections/blog/details/BlogPostCTA";
 import { connection } from "next/server";
-import { SITE_URL, absoluteUrl } from "@/lib/site";
+import { absoluteUrl } from "@/lib/site";
 
 
 
@@ -246,10 +246,9 @@ export async function generateMetadata({
 
     // Use the stored SEO slug, falling back to the requested slug.
     const canonicalSlug = getNonEmptyString(post.seo.slug) || slug;
-    const localizedPath = currentLocale === "ar" ? `/${canonicalSlug}` : `/en/${canonicalSlug}`;
-    const canonicalUrl = absoluteUrl(localizedPath);
-    const arabicUrl = absoluteUrl(`/${canonicalSlug}`);
-    const englishUrl = absoluteUrl(`/en/${canonicalSlug}`);
+    const arabicUrl = absoluteUrl(`/${canonicalSlug}/`);
+    const englishUrl = absoluteUrl(`/en/${canonicalSlug}/`);
+    const canonicalUrl =currentLocale === "ar"? arabicUrl: englishUrl;
     const image = getValidImageUrl(post.coverImage?.url);
 
     const imageAlt = getNonEmptyString(post.coverImage?.alt?.[currentLocale]) || localizedTitle;

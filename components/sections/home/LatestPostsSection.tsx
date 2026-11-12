@@ -58,7 +58,7 @@ export default function LatestPostsSection({
                     </div>
 
                     <Link
-                        href={isArabic ? "/blog" : "/en/blog"}
+                        href={isArabic ? "/blog/" : "/en/blog/"}
                         className="group hidden shrink-0 items-center gap-3 text-sm font-semibold text-slate-700 sm:inline-flex"
                     >
                         <span>
@@ -89,7 +89,7 @@ export default function LatestPostsSection({
 
                 <div className="mt-9 flex justify-center sm:hidden">
                     <Link
-                        href={isArabic ? "/blog" : "/en/blog"}
+                        href={isArabic ? "/blog/" : "/en/blog/"}
                         className="group inline-flex items-center gap-3 rounded-full border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition-all duration-300 hover:border-[var(--theme-primary)] hover:bg-[var(--theme-primary)] hover:text-slate-950"
                     >
                         <span>

@@ -148,8 +148,8 @@ export default function ExhibitionsSection({
                         <Link
                             href={
                                 isArabic
-                                    ? "/exhibitions"
-                                    : "/en/exhibitions"
+                                    ? "/exhibitions/"
+                                    : "/en/exhibitions/"
                             }
                             className="group inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:border-[var(--theme-primary)] hover:bg-white/[0.06]"
                         >

@@ -75,8 +75,7 @@ export default function PreviousEditionsSection({
                 ? "mx-auto max-w-[760px] grid-cols-1 sm:grid-cols-2"
                 : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
 
-    const allExhibitionsHref =
-        locale === "ar" ? "/exhibitions" : "/en/exhibitions";
+    const allExhibitionsHref = locale === "ar" ? "/exhibitions/" : "/en/exhibitions/";
 
     return (
         <section

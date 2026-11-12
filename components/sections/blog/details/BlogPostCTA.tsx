@@ -42,8 +42,8 @@ export default function BlogPostCTA({
                 <Link
                     href={
                         isArabic
-                            ? "/contact"
-                            : "/en/contact"
+                            ? "/contact/"
+                            : "/en/contact/"
                     }
                     className="inline-flex shrink-0 items-center gap-3 rounded-full bg-(--theme-primary) px-7 py-4 text-sm font-bold text-(--theme-secondary) transition hover:scale-[1.02]"
                 >

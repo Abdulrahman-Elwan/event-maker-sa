@@ -74,8 +74,8 @@ function getServiceUrl(locale: Locale, slug: string,): string {
 
     const path =
         locale === "ar"
-            ? `/services/${encodedSlug}`
-            : `/en/services/${encodedSlug}`;
+            ? `/services/${encodedSlug}/`
+            : `/en/services/${encodedSlug}/`;
 
     return absoluteUrl(path);
 }

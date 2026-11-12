@@ -48,7 +48,7 @@ export default function ServiceUsageFieldsSection({
                             {primaryImage?.url && (
                                 <Image
                                     src={primaryImage.url}
-                                    alt=""
+                                    alt={primaryImage.public_id}
                                     fill
                                     sizes="(max-width: 1024px) 100vw, 45vw"
                                     className="object-cover transition-transform duration-1000 hover:scale-[1.03]"
@@ -70,7 +70,7 @@ export default function ServiceUsageFieldsSection({
                                     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border-4 border-white bg-white shadow-[0_18px_45px_rgba(0,0,0,0.25)] sm:border-[6px]">
                                         <Image
                                             src={secondaryImage.url}
-                                            alt=""
+                                            alt={secondaryImage.public_id}
                                             fill
                                             sizes="(max-width: 640px) 38vw, 18vw"
                                             className="object-cover transition-transform duration-700 hover:scale-[1.05]"

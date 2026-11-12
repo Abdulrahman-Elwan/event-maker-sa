@@ -37,8 +37,8 @@ export default function ExhibitionsSection({
 
     const getPageHref = (page: number) => {
         return isArabic
-            ? `/exhibitions?page=${page}`
-            : `/en/exhibitions?page=${page}`;
+            ? `/exhibitions?page=${page}/`
+            : `/en/exhibitions?page=${page}/`;
     };
 
     return (

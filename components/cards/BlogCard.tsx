@@ -76,8 +76,8 @@ export default function BlogCard({
         "";
 
     const href = isArabic
-        ? `/${post.seo.slug}`
-        : `/en/${post.seo.slug}`;
+        ? `/${post.seo.slug}/`
+        : `/en/${post.seo.slug}/`;
 
     return (
         <article

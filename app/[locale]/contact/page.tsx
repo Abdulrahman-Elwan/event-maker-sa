@@ -51,8 +51,8 @@ export async function generateMetadata({ params, }: ContactPageProps): Promise<M
     const seo = CONTACT_SEO[currentLocale];
 
     const CONTACT_URLS = {
-        ar: absoluteUrl("/contact"),
-        en: absoluteUrl("/en/contact"),
+        ar: absoluteUrl("/contact/"),
+        en: absoluteUrl("/en/contact/"),
     };
 
     const canonicalUrl = CONTACT_URLS[currentLocale];

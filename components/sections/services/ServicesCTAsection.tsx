@@ -65,8 +65,8 @@ export default function ServicesCTASection({locale,}: ServicesCTASectionProps) {
                                 <a
                                     href={
                                         isArabic
-                                            ? "/contact"
-                                            : "/en/contact"
+                                            ? "/contact/"
+                                            : "/en/contact/"
                                     }
                                     className="group inline-flex items-center gap-3 bg-(--theme-primary) px-6 py-3.5 text-sm font-bold text-(--theme-secondary) transition-all duration-300 hover:gap-4 hover:brightness-105"
                                 >
@@ -90,8 +90,8 @@ export default function ServicesCTASection({locale,}: ServicesCTASectionProps) {
                                 <a
                                     href={
                                         isArabic
-                                            ? "/services"
-                                            : "/en/services"
+                                            ? "/services/"
+                                            : "/en/services/"
                                     }
                                     className="inline-flex items-center px-6 py-3.5 text-sm font-semibold text-white/80 transition-colors duration-300 hover:text-white"
                                 >

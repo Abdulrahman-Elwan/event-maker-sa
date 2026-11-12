@@ -82,12 +82,12 @@ export default function ExhibitionHero({
     const poster = exhibition.main_image?.url;
 
     const visitorRegisterUrl = isArabic
-        ? `/booking/visitor/${exhibition.slug}`
-        : `/en/booking/visitor/${exhibition.slug}`;
+        ? `/booking/visitor/${exhibition.slug}/`
+        : `/en/booking/visitor/${exhibition.slug}/`;
 
     const exhibitorRegisterUrl = isArabic
-        ? `/booking/exhibitor/${exhibition.slug}`
-        : `/en/booking/exhibitor/${exhibition.slug}`;
+        ? `/booking/exhibitor/${exhibition.slug}/`
+        : `/en/booking/exhibitor/${exhibition.slug}/`;
 
     return (
         <section
@@ -112,7 +112,7 @@ export default function ExhibitionHero({
                 ) : poster ? (
                     <Image
                         src={poster}
-                        alt=""
+                        alt={title}
                         fill
                         priority
                         sizes="100vw"

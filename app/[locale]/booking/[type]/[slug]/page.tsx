@@ -89,9 +89,9 @@ function getValidImageUrl(value: unknown): string | undefined {
 }
 
 function getBookingUrl(locale: Locale, type: BookingType, slug: string): string {
-    const localePath = locale === "en" ? "/en" : "";
+    const localePath = locale === "en" ? "/en/" : "";
     return absoluteUrl(
-        `${localePath}/booking/${type}/${encodeURIComponent(slug)}`
+        `${localePath}/booking/${type}/${encodeURIComponent(slug)}/`
     );
 }
 

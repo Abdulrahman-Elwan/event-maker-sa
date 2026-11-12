@@ -126,8 +126,8 @@ export async function generateMetadata({
             : fallback.keywords;
 
     const ABOUT_URLS = {
-        ar: absoluteUrl("/about"),
-        en: absoluteUrl("/en/about"),
+        ar: absoluteUrl("/about/"),
+        en: absoluteUrl("/en/about/"),
     } as const;
 
     const canonicalUrl = ABOUT_URLS[currentLocale];

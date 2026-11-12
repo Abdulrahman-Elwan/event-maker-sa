@@ -20,8 +20,8 @@ export default function BlogFilters({
     const isArabic = locale === "ar";
 
     const basePath = isArabic
-        ? "/blog"
-        : "/en/blog";
+        ? "/blog/"
+        : "/en/blog/";
 
     const getHref = (
         category?: string,
@@ -40,7 +40,7 @@ export default function BlogFilters({
         const query = params.toString();
 
         return query
-            ? `${basePath}?${query}`
+            ? `${basePath}?${query}/`
             : basePath;
     };
 

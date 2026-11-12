@@ -100,8 +100,8 @@ export default function CTASection({
                         <Link
                             href={
                                 isArabic
-                                    ? "/contact"
-                                    : "/en/contact"
+                                    ? "/contact/"
+                                    : "/en/contact/"
                             }
                             className="group inline-flex min-w-48 items-center justify-center gap-3 rounded-full px-7 py-3.5 text-sm font-bold text-slate-950 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_35px_rgba(232,184,92,0.25)]"
                             style={{
@@ -127,8 +127,8 @@ export default function CTASection({
                         <Link
                             href={
                                 isArabic
-                                    ? "/contact"
-                                    : "/en/contact"
+                                    ? "/contact/"
+                                    : "/en/contact/"
                             }
                             className="inline-flex min-w-40 items-center justify-center rounded-full border border-white/15 px-7 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:border-white/30 hover:bg-white/5"
                         >

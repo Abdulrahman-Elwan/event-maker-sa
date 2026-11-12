@@ -21,12 +21,12 @@ export default function ServiceHero({
     const description = service.shortDescription[locale];
 
     const servicesHref = isArabic
-        ? "/services"
-        : "/en/services";
+        ? "/services/"
+        : "/en/services/";
 
     const contactHref = isArabic
-        ? "/contact"
-        : "/en/contact";
+        ? "/contact/"
+        : "/en/contact/";
 
     return (
         <section

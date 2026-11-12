@@ -56,8 +56,8 @@ export default function ServicesExplorerInteractive({
     };
 
     const detailHref = isArabic
-        ? `/services/${activeService.slug}`
-        : `/en/services/${activeService.slug}`;
+        ? `/services/${activeService.slug}/`
+        : `/en/services/${activeService.slug}/`;
 
     return (
         <section

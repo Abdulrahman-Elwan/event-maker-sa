@@ -20,13 +20,8 @@ export default function ExhibitionMainOverview({
     exhibition,
 }: ExhibitionOverviewProps) {
     const isArabic = locale === "ar";
-
-    const title = exhibition.title?.[locale];
     const description = exhibition.description?.[locale];
     const meta = exhibition.meta?.[locale];
-
-    const image = exhibition.main_image?.url;
-    const video = exhibition.main_video?.url;
     const portfolioPdf = exhibition.portfolio_pdf?.url;
 
     const sectionLabel =

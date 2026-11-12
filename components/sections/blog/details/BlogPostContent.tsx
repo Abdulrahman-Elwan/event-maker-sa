@@ -201,7 +201,7 @@ export default function BlogPostContent({
                                     (heading, index) => (
                                         <li key={heading.id}>
                                             <a
-                                                href={`#${heading.id}`}
+                                                href={`#${heading.id}/`}
                                                 className={`block border-s-2 border-transparent py-2.5 text-sm leading-6 text-(--theme-text)/80 transitionhover:border-(--theme-primary) hover:text-(--theme-primary)${heading.level === 3 ? "ps-5 text-xs" : "ps-3"}`}
                                             >
                                                 <span className="me-2 text-(--theme-primary)/85">

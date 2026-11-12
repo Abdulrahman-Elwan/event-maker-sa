@@ -134,7 +134,7 @@ function getValidImageUrl(
 
 
 function getExhibitionsCanonical(locale: Locale, page: number): string {
-    const path = locale === "ar" ? "/exhibitions" : "/en/exhibitions";
+    const path = locale === "ar" ? "/exhibitions/" : "/en/exhibitions/";
     const url = absoluteUrl(path);
 
     if (page <= 1) return url;

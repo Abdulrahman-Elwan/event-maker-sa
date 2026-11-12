@@ -21,8 +21,8 @@ export default function ServiceCTASection({
         return null;
     }
 
-    const contactHref = isArabic ? "/contact" : "/en/contact";
-    const servicesHref = isArabic ? "/services" : "/en/services";
+    const contactHref = isArabic ? "/contact/" : "/en/contact/";
+    const servicesHref = isArabic ? "/services/" : "/en/services/";
 
     return (
         <section
