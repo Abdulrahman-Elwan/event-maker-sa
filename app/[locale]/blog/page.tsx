@@ -1,4 +1,4 @@
-
+// app\[locale]\blog\page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -183,11 +183,15 @@ export async function generateMetadata({ params, searchParams,
             : {
                 alternates: {
                     canonical: canonicalUrl,
-                    languages: {
-                        ar: BLOG_URLS.ar,
-                        en: BLOG_URLS.en,
-                        "x-default": BLOG_URLS.ar,
-                    },
+                    ...(!category && page === 1
+                        ? {
+                            languages: {
+                                ar: BLOG_URLS.ar,
+                                en: BLOG_URLS.en,
+                                "x-default": BLOG_URLS.ar,
+                            },
+                        }
+                        : {}),
                 },
             }),
 
