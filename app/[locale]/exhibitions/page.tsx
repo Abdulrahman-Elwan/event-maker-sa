@@ -1,3 +1,4 @@
+// app\[locale]\exhibitions\page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
