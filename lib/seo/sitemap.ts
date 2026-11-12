@@ -87,6 +87,7 @@ function normalizeLastModified(
     }
 }
 
+
 export function buildSitemapUrl(
     entry: SitemapEntry,
 ): string {
@@ -107,18 +108,21 @@ export function buildSitemapUrl(
         return "";
     }
 
-    const alternates: string[] = [];
+    const lines = [
+        "    <url>",
+        `        <loc>${escapeXml(canonicalUrl)}</loc>`,
+    ];
 
     if (arabicUrl) {
-        alternates.push(
-            `<xhtml:link rel="alternate" hreflang="ar" href="${escapeXml(arabicUrl)}" />`,
-            `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(arabicUrl)}" />`,
+        lines.push(
+            `        <xhtml:link rel="alternate" hreflang="ar" href="${escapeXml(arabicUrl)}" />`,
+            `        <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(arabicUrl)}" />`,
         );
     }
 
     if (englishUrl) {
-        alternates.push(
-            `<xhtml:link rel="alternate" hreflang="en" href="${escapeXml(englishUrl)}" />`,
+        lines.push(
+            `        <xhtml:link rel="alternate" hreflang="en" href="${escapeXml(englishUrl)}" />`,
         );
     }
 
@@ -126,15 +130,15 @@ export function buildSitemapUrl(
         entry.lastModified,
     );
 
-    return [
-        "<url>",
-        `<loc>${escapeXml(canonicalUrl)}</loc>`,
-        ...alternates,
-        ...(lastModified
-            ? [`<lastmod>${lastModified}</lastmod>`]
-            : []),
-        "</url>",
-    ].join("");
+    if (lastModified) {
+        lines.push(
+            `        <lastmod>${lastModified}</lastmod>`,
+        );
+    }
+
+    lines.push("    </url>");
+
+    return lines.join("\n");
 }
 
 export function buildUrlSet(
@@ -143,14 +147,14 @@ export function buildUrlSet(
     const urls = entries
         .map(buildSitemapUrl)
         .filter(Boolean)
-        .join("");
+        .join("\n");
 
     return [
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
         urls,
         "</urlset>",
-    ].join("");
+    ].join("\n");
 }
 
 export function sitemapResponse(xml: string): Response {
