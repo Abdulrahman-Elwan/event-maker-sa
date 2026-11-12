@@ -6,13 +6,36 @@ const nextConfig: NextConfig = {
 
     // Ensure metadata is rendered inside <head> for SEO crawlers.
     htmlLimitedBots: /.*/,
-    
+
     experimental: {
         agentFeedback: true,
     },
 
     cacheComponents: true,
     partialPrefetching: true,
+
+    // Security Headers
+    async headers() {
+        return [
+            {
+                source: "/:path*",
+                headers: [
+                    {
+                        key: "X-Frame-Options",
+                        value: "SAMEORIGIN",
+                    },
+                    {
+                        key: "Referrer-Policy",
+                        value: "strict-origin-when-cross-origin",
+                    },
+                    {
+                        key: "X-Content-Type-Options",
+                        value: "nosniff",
+                    },
+                ],
+            },
+        ];
+    },
 
     turbopack: {
         rules: {
