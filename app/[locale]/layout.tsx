@@ -14,6 +14,7 @@ import { getTodayDate } from "@/lib/data/getTodayDate";
 import "../globals.css";
 import WhatsappIcon from "@/components/layout/WhatsappIcon";
 import CookieConsent from "@/components/layout/CookieConsent";
+import { SITE_URL } from "@/lib/site";
 
 /* Fonts */
 const geistSans = Geist({
@@ -39,7 +40,7 @@ function getGoogleFontsUrl(arabicFont: string, englishFont: string) {
 
 /* Metadata */
 export const metadata: Metadata = {
-  metadataBase: new URL("https://event-maker.sa"),
+  metadataBase: new URL(SITE_URL),
 
   title: {
     default: "Event Maker",

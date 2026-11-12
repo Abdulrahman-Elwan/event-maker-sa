@@ -1,29 +1,20 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import type { Locale } from "@/lib/i18n/config";
 import { locales } from "@/lib/i18n/config";
-
 import ContactHero from "@/components/sections/contact/ContactHero";
 import ContactInfo from "@/components/sections/contact/ContactInfo";
 import ContactForm from "@/components/sections/contact/ContactForm";
 import ContactLocation from "@/components/sections/contact/ContactLocation";
-
 import { getContactSettings } from "@/lib/data/siteSettings";
+import { absoluteUrl } from "@/lib/site";
 
 interface ContactPageProps {
     params: Promise<{
         locale: string;
     }>;
 }
-
-const SITE_URL = "https://event-maker.sa";
-
-const CONTACT_URLS = {
-    ar: `${SITE_URL}/contact`,
-    en: `${SITE_URL}/en/contact`,
-} as const;
 
 const CONTACT_SEO = {
     ar: {
@@ -47,10 +38,7 @@ const CONTACT_SEO = {
 // --------------------------------------------------
 // Metadata
 // --------------------------------------------------
-
-export async function generateMetadata({
-    params,
-}: ContactPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, }: ContactPageProps): Promise<Metadata> {
     const { locale } = await params;
 
     if (!locales.includes(locale as Locale)) {
@@ -61,6 +49,12 @@ export async function generateMetadata({
     const isArabic = currentLocale === "ar";
 
     const seo = CONTACT_SEO[currentLocale];
+
+    const CONTACT_URLS = {
+        ar: absoluteUrl("/contact"),
+        en: absoluteUrl("/en/contact"),
+    };
+
     const canonicalUrl = CONTACT_URLS[currentLocale];
 
     return {

@@ -2,24 +2,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-
 import { locales } from "@/lib/i18n/config";
 import type { Locale } from "@/lib/i18n/config";
-
 import { getBlogCategories } from "@/lib/data/blog/getBlogCategories";
 import { getBlogData } from "@/lib/data/blog/getBlogData";
 import { getBlogPosts } from "@/lib/data/blog/getBlogPosts";
-
 import BlogHero from "@/components/sections/blog/BlogHero";
 import BlogFilters from "@/components/sections/blog/BlogFilters";
 import BlogPostsSection from "@/components/sections/blog/BlogPostsSection";
-
-const SITE_URL = "https://event-maker.sa";
-
-const BLOG_URLS = {
-    ar: `${SITE_URL}/blog`,
-    en: `${SITE_URL}/en/blog`,
-} as const;
+import { SITE_URL, absoluteUrl } from "@/lib/site";
 
 const BLOG_SEO_FALLBACK: Record<
     Locale,
@@ -115,18 +106,23 @@ export async function generateMetadata({
 
     const description =
         typeof firebaseDescription === "string" &&
-        firebaseDescription.trim()
+            firebaseDescription.trim()
             ? firebaseDescription.trim()
             : fallback.description;
 
     const keywords =
         typeof firebaseKeywords === "string" &&
-        firebaseKeywords.trim()
+            firebaseKeywords.trim()
             ? firebaseKeywords
-                  .split(",")
-                  .map((item) => item.trim())
-                  .filter(Boolean)
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean)
             : fallback.keywords;
+
+    const BLOG_URLS = {
+        ar: absoluteUrl("/blog"),
+        en: absoluteUrl("/en/blog"),
+    } as const;
 
     const canonicalUrl = BLOG_URLS[currentLocale];
 
@@ -188,7 +184,7 @@ async function BlogListingContent({
 
     const activeCategory =
         typeof query.category === "string" &&
-        query.category.trim()
+            query.category.trim()
             ? query.category.trim()
             : undefined;
 

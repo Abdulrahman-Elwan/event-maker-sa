@@ -1,28 +1,35 @@
 
 import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n/config";
-
+import { absoluteUrl } from "@/lib/site";
 interface PageProps {
     params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({
-    params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, }: PageProps): Promise<Metadata> {
     const { locale } = await params;
     const isArabic = locale === "ar";
+
+    const canonicalUrl = absoluteUrl(
+        isArabic ? "/terms" : "/en/terms"
+    );
 
     return {
         title: isArabic
             ? "الشروط والأحكام"
             : "Terms & Conditions",
+
         description: isArabic
             ? "تعرف على شروط وأحكام استخدام موقع Event Maker والخدمات المقدمة من خلاله."
             : "Read the terms and conditions governing your use of the Event Maker website and its services.",
+
         alternates: {
-            canonical: isArabic
-                ? "/terms"
-                : "/en/terms",
+            canonical: canonicalUrl,
+            languages: {
+                ar: absoluteUrl("/terms"),
+                en: absoluteUrl("/en/terms"),
+                "x-default": absoluteUrl("/terms"),
+            },
         },
     };
 }
@@ -53,8 +60,8 @@ export default async function TermsPage({
                     paragraphs: [
                         <>
                             <strong>الموقع:</strong> الموقع الإلكتروني المعنون بـ{" "}
-                            <a href="https://event-maker-sa.com/" target="_blank" rel="noopener noreferrer">
-                                https://event-maker-sa.com/
+                            <a href={absoluteUrl("/")} target="_blank" rel="noopener noreferrer">
+                                {absoluteUrl("/")}
                             </a>.
                         </>,
                         <>
@@ -139,8 +146,8 @@ export default async function TermsPage({
                     paragraphs: [
                         <>
                             <strong>Website:</strong> The website available at{" "}
-                            <a href="https://event-maker-sa.com/" target="_blank" rel="noopener noreferrer">
-                                https://event-maker-sa.com/
+                            <a href={absoluteUrl("/")} target="_blank" rel="noopener noreferrer" >
+                                {absoluteUrl("/")}
                             </a>.
                         </>,
                         <>

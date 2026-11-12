@@ -1,16 +1,9 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import type { Locale } from "@/lib/i18n/config";
 import { locales } from "@/lib/i18n/config";
-
-import {
-    getExhibitionBySlug,
-    getExhibitions,
-    getPreviousEditions,
-} from "@/lib/data/landingPage/exhibitions";
-
+import { getExhibitionBySlug, getExhibitions, getPreviousEditions, } from "@/lib/data/landingPage/exhibitions";
 import ExhibitionHero from "@/components/sections/exhibition/ExhibitionHero";
 import ExhibitionAbout from "@/components/sections/exhibition/ExhibitionAbout";
 import PreviousEditionsSection from "@/components/sections/exhibition/PreviousEditionsSection";
@@ -20,12 +13,10 @@ import RegistrationSection from "@/components/registration/RegistrationSection";
 import ExhibitionMainOverview from "@/components/sections/exhibition/ExhibitionMainOverview";
 import ExhibitionGallerySection from "@/components/sections/exhibition/ExhibitionGallerySection";
 import ExhibitionSectorsSection from "@/components/sections/exhibition/ExhibitionSectorsSection";
-
 import { getExhibitionStatus } from "@/lib/utils/exhibition";
 import { getExhibitionSectors } from "@/lib/data/landingPage/getExhibitionSectors";
 import { getTodayDate } from "@/lib/data/getTodayDate";
-
-const SITE_URL = "https://event-maker.sa";
+import { absoluteUrl } from "@/lib/site";
 
 interface ExhibitionDetailsPageProps {
     params: Promise<{
@@ -83,15 +74,11 @@ function getValidImageUrl(
     }
 }
 
-function getExhibitionUrl(
-    locale: Locale,
-    slug: string,
-): string {
+function getExhibitionUrl(locale: Locale, slug: string,): string {
     const encodedSlug = encodeURIComponent(slug);
+    const path = locale === "ar" ? `/exhibitions/${encodedSlug}` : `/en/exhibitions/${encodedSlug}`;
 
-    return locale === "ar"
-        ? `${SITE_URL}/exhibitions/${encodedSlug}`
-        : `${SITE_URL}/en/exhibitions/${encodedSlug}`;
+    return absoluteUrl(path);
 }
 
 export async function generateStaticParams() {

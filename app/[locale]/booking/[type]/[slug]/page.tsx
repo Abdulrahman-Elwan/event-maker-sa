@@ -1,17 +1,11 @@
 
 // app/[locale]/booking/[type]/[slug]/page.tsx
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import { locales, type Locale } from "@/lib/i18n/config";
-
-import {
-    getExhibitions,
-    getExhibitionBySlug,
-} from "@/lib/data/landingPage/exhibitions";
-
+import { getExhibitions, getExhibitionBySlug, } from "@/lib/data/landingPage/exhibitions";
 import BookingPage from "@/components/booking/BookingPage";
+import { absoluteUrl } from "@/lib/site";
 
 type BookingType = "visitor" | "exhibitor" | "general";
 
@@ -22,8 +16,6 @@ interface BookingRouteProps {
         slug: string;
     }>;
 }
-
-const SITE_URL = "https://event-maker.sa";
 
 const BOOKING_TYPES: BookingType[] = [
     "visitor",
@@ -96,14 +88,11 @@ function getValidImageUrl(value: unknown): string | undefined {
     }
 }
 
-function getBookingUrl(
-    locale: Locale,
-    type: BookingType,
-    slug: string
-): string {
+function getBookingUrl(locale: Locale, type: BookingType, slug: string): string {
     const localePath = locale === "en" ? "/en" : "";
-
-    return `${SITE_URL}${localePath}/booking/${type}/${encodeURIComponent(slug)}`;
+    return absoluteUrl(
+        `${localePath}/booking/${type}/${encodeURIComponent(slug)}`
+    );
 }
 
 // --------------------------------------------------
@@ -203,13 +192,13 @@ export async function generateMetadata({
                     : "en_SA",
             ...(image
                 ? {
-                      images: [
-                          {
-                              url: image,
-                              alt: exhibitionTitle,
-                          },
-                      ],
-                  }
+                    images: [
+                        {
+                            url: image,
+                            alt: exhibitionTitle,
+                        },
+                    ],
+                }
                 : {}),
         },
 

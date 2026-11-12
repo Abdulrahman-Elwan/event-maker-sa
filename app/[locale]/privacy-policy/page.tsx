@@ -1,13 +1,12 @@
 
 import type { Metadata } from "next";
+import { absoluteUrl } from "@/lib/site";
 
 interface PageProps {
     params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({
-    params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, }: PageProps): Promise<Metadata> {
     const { locale } = await params;
     const isArabic = locale === "ar";
 
@@ -19,9 +18,11 @@ export async function generateMetadata({
             ? "تعرف على سياسة الخصوصية الخاصة بموقع Event Maker وكيفية جمع بياناتك الشخصية واستخدامها وحمايتها."
             : "Learn how Event Maker collects, uses, and protects your personal information and privacy.",
         alternates: {
-            canonical: isArabic
-                ? "/privacy-policy"
-                : "/en/privacy-policy",
+            canonical: absoluteUrl(
+                isArabic
+                    ? "/privacy-policy"
+                    : "/en/privacy-policy"
+            ),
         },
     };
 }
@@ -274,12 +275,10 @@ export default async function PrivacyPolicyPage({
                     <p className="text-sm leading-8 text-slate-600 sm:text-base">
                         {content.intro}{" "}
                         <a
-                            href="https://event-maker-sa.com/"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={absoluteUrl("/")}
                             className="font-medium text-amber-600 transition-colors hover:text-amber-700"
                         >
-                            https://event-maker-sa.com/
+                            {absoluteUrl("/")}
                         </a>{" "}
                         {content.introEnd}
                     </p>

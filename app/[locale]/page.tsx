@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import CompanyHome from "@/components/home/CompanyHome";
 import ExhibitionLanding from "@/components/home/ExhibitionLanding";
-
-import {
-    getHomepageData,
-    getHomeSEO,
-} from "@/lib/data/homepage";
-
+import { getHomepageData, getHomeSEO, } from "@/lib/data/homepage";
 import {
     locales,
     type Locale,
 } from "@/lib/i18n/config";
+import { absoluteUrl } from "@/lib/site";
 
 interface HomePageProps {
     params: Promise<{
@@ -20,7 +15,6 @@ interface HomePageProps {
     }>;
 }
 
-const SITE_URL = "https://event-maker.sa";
 
 /* Metadata */
 export async function generateMetadata({ params, }: HomePageProps): Promise<Metadata> {
@@ -32,11 +26,7 @@ export async function generateMetadata({ params, }: HomePageProps): Promise<Meta
 
     const currentLocale = locale as Locale;
     const isArabic = currentLocale === "ar";
-
-    const canonicalUrl = isArabic
-        ? `${SITE_URL}/`
-        : `${SITE_URL}/en`;
-
+    const canonicalUrl = isArabic ? absoluteUrl("/") : absoluteUrl("/en");
     const homepage = await getHomepageData();
 
     let title: string | undefined;
@@ -81,9 +71,9 @@ export async function generateMetadata({ params, }: HomePageProps): Promise<Meta
         alternates: {
             canonical: canonicalUrl,
             languages: {
-                ar: `${SITE_URL}/`,
-                en: `${SITE_URL}/en`,
-                "x-default": `${SITE_URL}/`,
+                ar: absoluteUrl("/"),
+                en: absoluteUrl("/en"),
+                "x-default": absoluteUrl("/"),
             },
         },
 

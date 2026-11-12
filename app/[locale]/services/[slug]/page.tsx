@@ -1,21 +1,17 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import type { Locale } from "@/lib/i18n/config";
 import { locales } from "@/lib/i18n/config";
-
 import { getServiceBySlug } from "@/lib/data/services/getServiceBySlug";
 import { getServicesData } from "@/lib/data/services/getServicesData";
-
 import ServiceHero from "@/components/sections/services/details/ServiceHero";
 import ServiceIntroductionSection from "@/components/sections/services/details/ServiceIntroductionSection";
 import ServiceFeaturesSection from "@/components/sections/services/details/ServiceFeaturesSection";
 import ServiceUsageFieldsSection from "@/components/sections/services/details/ServiceUsageFieldsSection";
 import ServiceGallerySection from "@/components/sections/services/details/ServiceGallerySection";
 import ServiceCTASection from "@/components/sections/services/details/ServiceCTASection";
-
-const SITE_URL = "https://event-maker.sa";
+import { absoluteUrl } from "@/lib/site";
 
 interface ServicePageProps {
     params: Promise<{
@@ -73,15 +69,15 @@ function getValidImageUrl(
     }
 }
 
-function getServiceUrl(
-    locale: Locale,
-    slug: string,
-): string {
+function getServiceUrl(locale: Locale, slug: string,): string {
     const encodedSlug = encodeURIComponent(slug);
 
-    return locale === "ar"
-        ? `${SITE_URL}/services/${encodedSlug}`
-        : `${SITE_URL}/en/services/${encodedSlug}`;
+    const path =
+        locale === "ar"
+            ? `/services/${encodedSlug}`
+            : `/en/services/${encodedSlug}`;
+
+    return absoluteUrl(path);
 }
 
 export async function generateStaticParams() {

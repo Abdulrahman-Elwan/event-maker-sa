@@ -1,7 +1,7 @@
 
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
+import { absoluteUrl } from "@/lib/site";
 import AboutHero from "@/components/sections/about/AboutHero";
 import AboutStorySection from "@/components/sections/about/AboutStorySection";
 import AboutWhyUsSection from "@/components/sections/about/AboutWhyUsSection";
@@ -21,13 +21,6 @@ interface AboutPageProps {
         locale: string;
     }>;
 }
-
-const SITE_URL = "https://event-maker.sa";
-
-const ABOUT_URLS = {
-    ar: `${SITE_URL}/about`,
-    en: `${SITE_URL}/en/about`,
-} as const;
 
 // Fallback metadata used only when Firebase SEO data is unavailable.
 const ABOUT_SEO_FALLBACK: Record<
@@ -114,13 +107,13 @@ export async function generateMetadata({
 
     const title =
         typeof seo?.title?.[currentLocale] === "string" &&
-        seo.title[currentLocale].trim()
+            seo.title[currentLocale].trim()
             ? seo.title[currentLocale].trim()
             : fallback.title;
 
     const description =
         typeof seo?.description?.[currentLocale] === "string" &&
-        seo.description[currentLocale].trim()
+            seo.description[currentLocale].trim()
             ? seo.description[currentLocale].trim()
             : fallback.description;
 
@@ -128,9 +121,14 @@ export async function generateMetadata({
 
     const keywords =
         typeof firebaseKeywords === "string" &&
-        firebaseKeywords.trim()
+            firebaseKeywords.trim()
             ? firebaseKeywords.trim()
             : fallback.keywords;
+
+    const ABOUT_URLS = {
+        ar: absoluteUrl("/about"),
+        en: absoluteUrl("/en/about"),
+    } as const;
 
     const canonicalUrl = ABOUT_URLS[currentLocale];
 

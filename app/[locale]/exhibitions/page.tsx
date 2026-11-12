@@ -1,28 +1,19 @@
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-
 import HeroSection from "@/components/sections/exhibition/AllExhibition/HeroSection";
 import ExhibitionsSection from "@/components/sections/exhibition/AllExhibition/ExhibitionsSection";
 import CTASection from "@/components/sections/home/CTASection";
-
 import { getExhibitionsData } from "@/lib/data/exhibitions/getExhibitionsData";
 import { getExhibitions } from "@/lib/data/landingPage/exhibitions";
 import { getTodayDate } from "@/lib/data/getTodayDate";
-
 import {
     locales,
     type Locale,
 } from "@/lib/i18n/config";
+import { absoluteUrl } from "@/lib/site";
 
-const SITE_URL = "https://event-maker.sa";
 const EXHIBITIONS_PER_PAGE = 9;
-
-const EXHIBITIONS_URLS = {
-    ar: `${SITE_URL}/exhibitions`,
-    en: `${SITE_URL}/en/exhibitions`,
-} as const;
 
 const EXHIBITIONS_SEO_FALLBACK: Record<
     Locale,
@@ -141,18 +132,16 @@ function getValidImageUrl(
     }
 }
 
-function getExhibitionsCanonical(
-    locale: Locale,
-    page: number
-): string {
-    const baseUrl = EXHIBITIONS_URLS[locale];
 
-    if (page <= 1) {
-        return baseUrl;
-    }
+function getExhibitionsCanonical(locale: Locale, page: number): string {
+    const path = locale === "ar" ? "/exhibitions" : "/en/exhibitions";
+    const url = absoluteUrl(path);
 
-    return `${baseUrl}?page=${page}`;
+    if (page <= 1) return url;
+
+    return `${url}?page=${page}`;
 }
+
 
 // --------------------------------------------------
 // Metadata
@@ -262,13 +251,13 @@ export async function generateMetadata({
                 : ["ar_SA"],
             ...(image
                 ? {
-                      images: [
-                          {
-                              url: image,
-                              alt: title,
-                          },
-                      ],
-                  }
+                    images: [
+                        {
+                            url: image,
+                            alt: title,
+                        },
+                    ],
+                }
                 : {}),
         },
 

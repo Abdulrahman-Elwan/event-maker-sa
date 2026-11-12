@@ -1,21 +1,16 @@
-
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
 import ServicesHero from "@/components/sections/services/ServicesHero";
 import ServicesStorySection from "@/components/sections/services/ServicesStorySection";
 import ServicesExplorerSection from "@/components/sections/services/ServicesExplorerSection";
 import ServicesWhyUsSection from "@/components/sections/services/ServicesWhyUsSection";
 import CTASection from "@/components/sections/home/CTASection";
-
 import { getServicesData } from "@/lib/data/services/getServicesData";
-
 import {
     locales,
     type Locale,
 } from "@/lib/i18n/config";
-
-const SITE_URL = "https://event-maker.sa";
+import { absoluteUrl } from "@/lib/site";
 
 interface ServicesPageProps {
     params: Promise<{
@@ -126,9 +121,7 @@ function getLocalizedKeywords(
 }
 
 function getServicesUrl(locale: Locale): string {
-    return locale === "ar"
-        ? `${SITE_URL}/services`
-        : `${SITE_URL}/en/services`;
+    return locale === "ar" ? absoluteUrl("/services") : absoluteUrl("/en/services");
 }
 
 /* -------------------------------------------------------------------------- */
