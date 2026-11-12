@@ -1,4 +1,4 @@
-
+// app\[locale]\exhibitions\[slug]\page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { Locale } from "@/lib/i18n/config";

@@ -8,9 +8,7 @@ import type {
     LocalizedText,
 } from "@/types/exhibitions/exhibitions";
 
-function isRecord(
-    value: unknown,
-): value is Record<string, unknown> {
+function isRecord(value: unknown,): value is Record<string, unknown> {
     return (
         typeof value === "object" &&
         value !== null &&
@@ -22,9 +20,7 @@ function normalizeString(value: unknown): string {
     return typeof value === "string" ? value : "";
 }
 
-function normalizeLocalizedText(
-    value: unknown,
-): LocalizedText {
+function normalizeLocalizedText(value: unknown,): LocalizedText {
     const data = isRecord(value) ? value : {};
 
     return {
@@ -33,8 +29,7 @@ function normalizeLocalizedText(
     };
 }
 
-function normalizeImage(
-    value: unknown,
+function normalizeImage(value: unknown,
 ): ExhibitionImage {
     const data = isRecord(value) ? value : {};
 
