@@ -12,9 +12,10 @@ import { CgMenuRightAlt } from "react-icons/cg";
 
 interface NavbarProps {
   locale: Locale;
+  companyProfileUrl: string | null;
 }
 
-export default function Navbar({ locale }: NavbarProps) {
+export default function Navbar({ locale, companyProfileUrl }: NavbarProps) {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,7 +60,6 @@ export default function Navbar({ locale }: NavbarProps) {
     },
   ];
 
-
   const pathSegments = pathname.split("/").filter(Boolean);
 
   // Remove locale prefixes to get the public path.
@@ -81,7 +81,6 @@ export default function Navbar({ locale }: NavbarProps) {
         : `/en${cleanPath}`
       : cleanPath;
 
-  const profileHref = isArabic ? "/company-profile/" : "/en/company-profile/";
   function closeMenu() {
     setIsMenuOpen(false);
   }
@@ -169,12 +168,16 @@ export default function Navbar({ locale }: NavbarProps) {
           })}
 
           {/* Company Profile */}
-          <Link
-            href={profileHref}
-            className="ml-2 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-orange-600"
-          >
-            <span>{isArabic ? "بروفايل" : "Profile"}</span>
-          </Link>
+          {companyProfileUrl && (
+            <a
+              href={companyProfileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-2 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-orange-600"
+            >
+              <span>{isArabic ? "بروفايل" : "Profile"}</span>
+            </a>
+          )}
 
           {/* Language Switcher */}
           <Link
@@ -249,13 +252,16 @@ export default function Navbar({ locale }: NavbarProps) {
             })}
 
             {/* Company Profile */}
-            <Link
-              href={profileHref}
-              onClick={closeMenu}
-              className={`mt-2 flex items-center gap-2 rounded-xl px-4 py-3 text-[15px] font-semibold transition-all bg-orange-500 text-white hover:bg-orange-600`}
-            >
-              {isArabic ? "بروفايل" : "Profile"}
-            </Link>
+            {companyProfileUrl && (
+              <a
+                href={companyProfileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-2 flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2 text-[14px] font-semibold text-white transition-all duration-200 hover:bg-orange-600"
+              >
+                <span>{isArabic ? "بروفايل" : "Profile"}</span>
+              </a>
+            )}
           </div>
         </div>
       )}

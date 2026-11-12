@@ -9,7 +9,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 import { getActiveTheme } from "@/lib/data/theme";
 import { getHomepageSettings } from "@/lib/data/homepage";
 import { getServices } from "@/lib/data/services";
-import { getContactSettings, getSocialSettings } from "@/lib/data/siteSettings";
+import { getContactSettings, getSocialSettings, getCompanyProfileUrl } from "@/lib/data/siteSettings";
 import { getTodayDate } from "@/lib/data/getTodayDate";
 import "../globals.css";
 import WhatsappIcon from "@/components/layout/WhatsappIcon";
@@ -72,12 +72,13 @@ export default async function LocaleLayout({
   const isArabic = currentLocale === "ar";
 
   /* Global Website Data */
-  const [homepageSettings, services, contactSettings, socialSettings, today] =
+  const [homepageSettings, services, contactSettings, socialSettings, companyProfileUrl, today] =
     await Promise.all([
       getHomepageSettings(),
       getServices(),
       getContactSettings(),
       getSocialSettings(),
+      getCompanyProfileUrl(),
       getTodayDate(),
     ]);
   const currentYear = Number(today.slice(0, 4));
@@ -115,7 +116,7 @@ export default async function LocaleLayout({
 
       <body className="min-h-full flex flex-col" style={themeStyles}>
         <Suspense fallback={<div className="h-20" aria-hidden="true" />}>
-          <Navbar locale={currentLocale} />
+          <Navbar locale={currentLocale} companyProfileUrl={companyProfileUrl} />
         </Suspense>
 
         {children}

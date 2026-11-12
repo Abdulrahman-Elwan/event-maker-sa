@@ -67,12 +67,20 @@ interface BlogListingContentProps {
 // Metadata
 // --------------------------------------------------
 
-export async function generateMetadata({
-    params,
+export async function generateMetadata({ params, searchParams,
 }: {
     params: Promise<{ locale: string }>;
+    searchParams: Promise<{
+        page?: string;
+        category?: string;
+        sort?: string;
+    }>;
 }): Promise<Metadata> {
-    const { locale } = await params;
+
+    const [{ locale }, query] = await Promise.all([
+        params,
+        searchParams,
+    ]);
 
     if (!locales.includes(locale as Locale)) {
         return {};
@@ -124,26 +132,69 @@ export async function generateMetadata({
         en: absoluteUrl("/en/blog/"),
     } as const;
 
-    const canonicalUrl = BLOG_URLS[currentLocale];
+    const basePath = isArabic ? "/blog/" : "/en/blog/";
+
+    // Normalize query parameters.
+    const category =
+        typeof query.category === "string"
+            ? query.category.trim().replace(/\/+$/, "")
+            : "";
+
+    const pageNumber = Number(query.page ?? "1");
+
+    const page =
+        Number.isInteger(pageNumber) && pageNumber > 1
+            ? pageNumber
+            : 1;
+
+    const isOldest = query.sort === "oldest";
+
+    // Build the canonical URL for indexable listing pages.
+    const canonicalParams = new URLSearchParams();
+
+    if (category) {
+        canonicalParams.set("category", category);
+    }
+
+    if (page > 1) {
+        canonicalParams.set("page", String(page));
+    }
+
+    const canonicalQuery = canonicalParams.toString();
+
+    const canonicalUrl = absoluteUrl(
+        canonicalQuery
+            ? `${basePath}?${canonicalQuery}`
+            : basePath
+    );
 
     return {
         title,
         description,
         keywords,
 
-        alternates: {
-            canonical: canonicalUrl,
-            languages: {
-                ar: BLOG_URLS.ar,
-                en: BLOG_URLS.en,
-                "x-default": BLOG_URLS.ar,
-            },
-        },
+        ...(isOldest
+            ? {
+                robots: {
+                    index: false,
+                    follow: true,
+                },
+            }
+            : {
+                alternates: {
+                    canonical: canonicalUrl,
+                    languages: {
+                        ar: BLOG_URLS.ar,
+                        en: BLOG_URLS.en,
+                        "x-default": BLOG_URLS.ar,
+                    },
+                },
+            }),
 
         openGraph: {
             type: "website",
             siteName: "Event Maker",
-            url: canonicalUrl,
+            url: isOldest ? BLOG_URLS[currentLocale] : canonicalUrl,
             title,
             description,
             locale: isArabic ? "ar_SA" : "en_SA",
@@ -185,7 +236,7 @@ async function BlogListingContent({
     const activeCategory =
         typeof query.category === "string" &&
             query.category.trim()
-            ? query.category.trim()
+            ? query.category.trim().replace(/\/+$/, "")
             : undefined;
 
     const blogQueryStart = performance.now();

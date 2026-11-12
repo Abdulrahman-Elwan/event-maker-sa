@@ -66,6 +66,13 @@ function cleanBlogContent(
     content = content.replace(/[ \t]{2,}/g, " ");
 
     content = content.replace(
+        /<h1\b([^>]*)>([\s\S]*?)<\/h1>/gi,
+        (_match, attributes, innerContent) => {
+            return `<h2${attributes}>${innerContent}</h2>`;
+        }
+    );
+
+    content = content.replace(
         /<span\b[^>]*>\s*(?:&nbsp;|&#160;|&#xA0;|\s|<br\s*\/?>)*\s*<\/span>/gi,
         ""
     );
@@ -252,8 +259,8 @@ export default function BlogPostContent({
                                         <a
                                             href={`#${heading.id}`}
                                             className={`block border-s-2 border-transparent py-2.5 text-sm leading-6 text-(--theme-text)/80 transition hover:border-(--theme-primary) hover:text-(--theme-primary)${heading.level === 3
-                                                    ? " ps-5 text-xs"
-                                                    : " ps-3"
+                                                ? " ps-5 text-xs"
+                                                : " ps-3"
                                                 }`}
                                         >
                                             <span className="me-2 text-(--theme-primary)/85">

@@ -206,3 +206,29 @@ export async function getSocialSettings(): Promise<SocialSettings> {
         socials,
     };
 }
+
+export async function getCompanyProfileUrl(): Promise<string | null> {
+    "use cache";
+
+    const snapshot = await adminDb
+        .collection("site_settings")
+        .doc("settings_company_profile")
+        .get();
+
+    if (!snapshot.exists) {
+        return null;
+    }
+
+    const data = snapshot.data();
+    const file = data?.file;
+
+    if (
+        !file ||
+        typeof file.url !== "string" ||
+        !file.url.trim()
+    ) {
+        return null;
+    }
+
+    return file.url;
+}

@@ -40,7 +40,7 @@ export default function BlogFilters({
         const query = params.toString();
 
         return query
-            ? `${basePath}?${query}/`
+            ? `${basePath}?${query}`
             : basePath;
     };
 
