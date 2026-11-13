@@ -1,5 +1,5 @@
+// lib\seo\sitemap.ts
 import { absoluteUrl } from "@/lib/site";
-
 export interface SitemapEntry {
     arPath: string;
     enPath: string;

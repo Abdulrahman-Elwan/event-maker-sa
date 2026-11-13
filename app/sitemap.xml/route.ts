@@ -1,5 +1,5 @@
+// app\sitemap.xml\route.ts
 import { absoluteUrl } from "@/lib/site";
-
 const sitemapPaths = [
     "/post-sitemap.xml",
     "/services-sitemap.xml",

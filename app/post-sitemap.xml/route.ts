@@ -1,4 +1,4 @@
-
+// app\post-sitemap.xml\route.ts
 import { adminDb } from "@/lib/firebase/admin";
 import {
     buildUrlSet,

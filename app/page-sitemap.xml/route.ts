@@ -1,3 +1,4 @@
+// app\page-sitemap.xml\route.ts
 import {
     buildUrlSet,
     sitemapResponse,
