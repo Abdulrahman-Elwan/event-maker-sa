@@ -1,4 +1,4 @@
-
+// components/animations/Reveal.tsx
 "use client";
 
 import {

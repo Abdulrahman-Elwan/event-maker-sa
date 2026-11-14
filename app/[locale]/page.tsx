@@ -1,3 +1,4 @@
+// app\[locale]\page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import CompanyHome from "@/components/home/CompanyHome";

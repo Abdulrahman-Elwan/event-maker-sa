@@ -1,5 +1,5 @@
+// components/exhibitions/ExhibitionFilter.tsx
 "use client";
-
 import type { ExhibitionStatus } from "@/lib/utils/exhibition";
 
 interface ExhibitionFilterProps {

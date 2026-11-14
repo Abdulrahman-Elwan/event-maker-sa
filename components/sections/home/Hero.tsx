@@ -1,3 +1,4 @@
+// components\sections\home\Hero.tsx
 import type { Locale } from "@/lib/i18n/config";
 import type { HeroSlide } from "@/lib/data/homepage";
 

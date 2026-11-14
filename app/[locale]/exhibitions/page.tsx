@@ -6,7 +6,7 @@ import HeroSection from "@/components/sections/exhibition/AllExhibition/HeroSect
 import ExhibitionsSection from "@/components/sections/exhibition/AllExhibition/ExhibitionsSection";
 import CTASection from "@/components/sections/home/CTASection";
 import { getExhibitionsData } from "@/lib/data/exhibitions/getExhibitionsData";
-import { getExhibitions } from "@/lib/data/landingPage/exhibitions";
+import { getPaginatedExhibitions } from "@/lib/data/landingPage/exhibitions";
 import { getTodayDate } from "@/lib/data/getTodayDate";
 import {
     locales,
@@ -15,7 +15,6 @@ import {
 import { absoluteUrl } from "@/lib/site";
 
 const EXHIBITIONS_PER_PAGE = 9;
-
 const EXHIBITIONS_SEO_FALLBACK: Record<
     Locale,
     {
@@ -53,12 +52,8 @@ const EXHIBITIONS_SEO_FALLBACK: Record<
 };
 
 interface ExhibitionsPageProps {
-    params: Promise<{
-        locale: string;
-    }>;
-    searchParams: Promise<{
-        page?: string;
-    }>;
+    params: Promise<{ locale: string; }>;
+    searchParams: Promise<{ page?: string; }>;
 }
 
 interface ExhibitionsContentProps {
@@ -73,15 +68,10 @@ interface ExhibitionsContentProps {
 function getCurrentPage(page?: string): number {
     const parsedPage = Number(page);
 
-    return Number.isInteger(parsedPage) && parsedPage > 0
-        ? parsedPage
-        : 1;
+    return Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 }
 
-function getLocalizedValue(
-    value: unknown,
-    locale: Locale
-): string | undefined {
+function getLocalizedValue(value: unknown, locale: Locale): string | undefined {
     if (!value || typeof value !== "object") {
         return undefined;
     }
@@ -94,10 +84,7 @@ function getLocalizedValue(
         : undefined;
 }
 
-function getKeywords(
-    value: unknown,
-    fallback: string[]
-): string[] {
+function getKeywords(value: unknown, fallback: string[]): string[] {
     if (typeof value !== "string" || !value.trim()) {
         return fallback;
     }
@@ -110,9 +97,7 @@ function getKeywords(
     return keywords.length > 0 ? keywords : fallback;
 }
 
-function getValidImageUrl(
-    value: unknown
-): string | undefined {
+function getValidImageUrl(value: unknown): string | undefined {
     if (typeof value !== "string" || !value.trim()) {
         return undefined;
     }
@@ -133,7 +118,6 @@ function getValidImageUrl(
     }
 }
 
-
 function getExhibitionsCanonical(locale: Locale, page: number): string {
     const path = locale === "ar" ? "/exhibitions/" : "/en/exhibitions/";
     const url = absoluteUrl(path);
@@ -143,15 +127,10 @@ function getExhibitionsCanonical(locale: Locale, page: number): string {
     return `${url}?page=${page}`;
 }
 
-
 // --------------------------------------------------
 // Metadata
 // --------------------------------------------------
-
-export async function generateMetadata({
-    params,
-    searchParams,
-}: ExhibitionsPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams, }: ExhibitionsPageProps): Promise<Metadata> {
     const { locale } = await params;
 
     if (!locales.includes(locale as Locale)) {
@@ -281,43 +260,24 @@ export async function generateMetadata({
 // --------------------------------------------------
 // Exhibitions Content
 // --------------------------------------------------
-
-async function ExhibitionsContent({
-    locale,
-    searchParams,
-}: ExhibitionsContentProps) {
-    // Runtime searchParams are accessed inside the Suspense boundary.
-    const [{ page }, today, allExhibitions] = await Promise.all([
+async function ExhibitionsContent({ locale, searchParams, }: ExhibitionsContentProps) {
+    const [{ page }, today] = await Promise.all([
         searchParams,
         getTodayDate(),
-        getExhibitions(),
     ]);
 
-    const currentPage = getCurrentPage(page);
-
-    const totalPages = Math.ceil(
-        allExhibitions.length / EXHIBITIONS_PER_PAGE
-    );
-
-    const safePage =
-        totalPages > 0
-            ? Math.min(currentPage, totalPages)
-            : 1;
-
-    const startIndex =
-        (safePage - 1) * EXHIBITIONS_PER_PAGE;
-
-    const paginatedExhibitions = allExhibitions.slice(
-        startIndex,
-        startIndex + EXHIBITIONS_PER_PAGE
+    const result = await getPaginatedExhibitions(
+        today,
+        getCurrentPage(page),
+        EXHIBITIONS_PER_PAGE,
     );
 
     return (
         <ExhibitionsSection
             locale={locale}
-            exhibitions={paginatedExhibitions}
-            currentPage={safePage}
-            totalPages={totalPages}
+            exhibitions={result.exhibitions}
+            currentPage={result.currentPage}
+            totalPages={result.totalPages}
             today={today}
         />
     );
@@ -326,11 +286,7 @@ async function ExhibitionsContent({
 // --------------------------------------------------
 // Exhibitions Page
 // --------------------------------------------------
-
-export default async function ExhibitionsPage({
-    params,
-    searchParams,
-}: ExhibitionsPageProps) {
+export default async function ExhibitionsPage({ params, searchParams, }: ExhibitionsPageProps) {
     const { locale } = await params;
 
     if (!locales.includes(locale as Locale)) {

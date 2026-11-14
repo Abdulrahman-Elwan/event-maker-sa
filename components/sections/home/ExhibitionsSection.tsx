@@ -3,52 +3,37 @@ import Link from "next/link";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 
 import type { Locale } from "@/lib/i18n/config";
-import type { Exhibition } from "@/types/landingPage/exhibition";
-
-import { getExhibitionStatus } from "@/lib/utils/exhibition";
+import type { ExhibitionCardData } from "@/types/landingPage/exhibition";
+import type { HomepageExhibitionsResult } from "@/lib/data/landingPage/exhibitions";
 
 import ExhibitionCard from "@/components/exhibitions/ExhibitionCard";
 import Reveal from "@/components/animations/Reveal";
 
 import ExhibitionsFilterClient from "./ExhibitionsFilterClient";
+import { getExhibitionStatus } from "@/lib/utils/exhibition";
 
 interface ExhibitionsSectionProps {
     locale: Locale;
     today: string;
-    exhibitions: Exhibition[];
+    exhibitions: ExhibitionCardData[];
+    totalCount: number;
+    statusCounts: HomepageExhibitionsResult["statusCounts"];
 }
 
 export default function ExhibitionsSection({
     locale,
     today,
     exhibitions,
+    totalCount,
+    statusCounts,
 }: ExhibitionsSectionProps) {
     const isArabic = locale === "ar";
-
-    // Calculate exhibition statuses on the server
-    const statusCounts = {
-        ongoing: 0,
-        upcoming: 0,
-        finished: 0,
-    };
-
-    const exhibitionsWithStatus = exhibitions.map((exhibition) => {
-        const status = getExhibitionStatus(exhibition, today);
-
-        statusCounts[status]++;
-
-        return {
-            exhibition,
-            status,
-        };
-    });
 
     return (
         <section
             dir={isArabic ? "rtl" : "ltr"}
             className="relative overflow-hidden bg-[var(--theme-secondary)] py-12 sm:py-15 lg:py-18"
         >
-            {/* Background decoration */}
             <div
                 className="pointer-events-none absolute -left-40 top-20 h-96 w-96 rounded-full opacity-10 blur-3xl"
                 style={{
@@ -64,10 +49,9 @@ export default function ExhibitionsSection({
             />
 
             <div className="relative mx-auto max-w-7xl px-5 sm:px-7 lg:px-8">
-
                 <ExhibitionsFilterClient
                     locale={locale}
-                    totalCount={exhibitions.length}
+                    totalCount={totalCount}
                     statusCounts={statusCounts}
                     emptyMessage={
                         isArabic
@@ -108,36 +92,34 @@ export default function ExhibitionsSection({
                         </Reveal>
                     }
                 >
-                    {/* Exhibitions Grid */}
                     <div
                         data-exhibitions-grid
                         className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
                     >
-                        {exhibitionsWithStatus.map(
-                            ({ exhibition, status }, index) => (
-                                <div
-                                    key={exhibition.id}
-                                    data-exhibition-status={status}
+                        {exhibitions.map((exhibition, index) => (
+                            <div
+                                key={exhibition.id}
+                                data-exhibition-status={
+                                    getExhibitionStatus(exhibition, today)
+                                }
+                            >
+                                <Reveal
+                                    distance={40}
+                                    duration={800}
+                                    delay={Math.min(index * 200, 480)}
+                                    threshold={0.05}
                                 >
-                                    <Reveal
-                                        distance={40}
-                                        duration={800}
-                                        delay={Math.min(index * 200, 480)}
-                                        threshold={0.05}
-                                    >
-                                        <ExhibitionCard
-                                            exhibition={exhibition}
-                                            locale={locale}
-                                            today={today}
-                                        />
-                                    </Reveal>
-                                </div>
-                            )
-                        )}
+                                    <ExhibitionCard
+                                        exhibition={exhibition}
+                                        locale={locale}
+                                        today={today}
+                                    />
+                                </Reveal>
+                            </div>
+                        ))}
                     </div>
                 </ExhibitionsFilterClient>
 
-                {/* View All */}
                 <Reveal
                     distance={25}
                     duration={750}

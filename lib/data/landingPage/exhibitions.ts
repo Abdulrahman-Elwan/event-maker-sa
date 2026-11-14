@@ -1,22 +1,10 @@
 // lib\data\landingPage\exhibitions.ts
 import { adminDb } from "@/lib/firebase/admin";
+import type { Exhibition, ExhibitionAboutCard, ExhibitionAboutSection, ExhibitionImage, ExhibitionLocation, ExhibitionMedia, ExhibitionPartner, ExhibitionSpeaker, ExhibitionStat, LocalizedText, ExhibitionCardData, } from "@/types/landingPage/exhibition";
+import { cacheLife } from "next/cache";
+import { getExhibitionStatus, } from "@/lib/utils/exhibition";
 
-import type {
-    Exhibition,
-    ExhibitionAboutCard,
-    ExhibitionAboutSection,
-    ExhibitionImage,
-    ExhibitionLocation,
-    ExhibitionMedia,
-    ExhibitionPartner,
-    ExhibitionSpeaker,
-    ExhibitionStat,
-    LocalizedText,
-} from "@/types/landingPage/exhibition";
-
-function normalizeLocalizedText(
-    value: unknown,
-): LocalizedText {
+function normalizeLocalizedText(value: unknown,): LocalizedText {
     if (!value || typeof value !== "object") {
         return {
             ar: "",
@@ -361,7 +349,7 @@ function normalizePartner(
 
     const name =
         nameValue &&
-        typeof nameValue === "object"
+            typeof nameValue === "object"
             ? normalizeLocalizedText(nameValue)
             : undefined;
 
@@ -431,15 +419,9 @@ function normalizePortfolioPdf(
     };
 }
 
-export function normalizeExhibition(
-    id: string,
-    data: FirebaseFirestore.DocumentData,
-): Exhibition {
-    const startDate =
-        normalizeDate(data.start_date) ?? "";
-
-    const endDate =
-        normalizeDate(data.end_date) ?? "";
+export function normalizeExhibition(id: string, data: FirebaseFirestore.DocumentData,): Exhibition {
+    const startDate = normalizeDate(data.start_date)?.slice(0, 10) ?? "";
+    const endDate = normalizeDate(data.end_date)?.slice(0, 10) ?? "";
 
     return {
         id,
@@ -556,35 +538,137 @@ export function normalizeExhibition(
     };
 }
 
+type ExhibitionBucket =
+    | "ongoing"
+    | "upcoming"
+    | "finished"
+    | "inactive";
+
+const EXHIBITION_BUCKETS: ExhibitionBucket[] = [
+    "ongoing",
+    "upcoming",
+    "finished",
+    "inactive",
+];
+
+function normalizeExhibitionCard(id: string, data: FirebaseFirestore.DocumentData,): ExhibitionCardData {
+    return {
+        id,
+
+        slug:
+            typeof data.slug === "string"
+                ? data.slug
+                : id,
+
+        title: normalizeLocalizedText(data.title),
+
+        start_date:
+            normalizeDate(data.start_date)?.slice(0, 10) ?? "",
+
+        end_date:
+            normalizeDate(data.end_date)?.slice(0, 10) ?? "",
+
+        location: normalizeLocation(data.location),
+
+        main_image: normalizeImage(data.main_image),
+    };
+}
+
+async function getBucketCount(bucket: ExhibitionBucket, today: string,): Promise<number> {
+    const snapshot = await getExhibitionBucketQuery(bucket, today,)
+        .count()
+        .get();
+
+    return snapshot.data().count;
+}
+
+async function getBucketExhibitions(
+    bucket: ExhibitionBucket,
+    today: string,
+    limit: number,
+    offset = 0,
+): Promise<ExhibitionCardData[]> {
+    if (limit <= 0) {
+        return [];
+    }
+
+    let query = getExhibitionBucketQuery(
+        bucket,
+        today,
+    );
+
+    if (offset > 0) {
+        query = query.offset(offset);
+    }
+
+    const snapshot = await query
+        .limit(limit)
+        .get();
+
+    return snapshot.docs.map((doc) =>
+        normalizeExhibitionCard(
+            doc.id,
+            doc.data(),
+        ),
+    );
+}
+
+function getExhibitionBucketQuery(bucket: ExhibitionBucket, today: string,): FirebaseFirestore.Query {
+    const collection = adminDb.collection("exhibitions");
+
+    switch (bucket) {
+        case "ongoing":
+            return collection
+                .where("is_active", "==", true)
+                .where("start_date", "<=", today)
+                .where("end_date", ">=", today)
+                .orderBy("start_date", "desc");
+
+        case "upcoming":
+            return collection
+                .where("is_active", "==", true)
+                .where("start_date", ">", today)
+                .orderBy("start_date", "asc");
+
+        case "finished":
+            return collection
+                .where("is_active", "==", true)
+                .where("end_date", "<", today)
+                .orderBy("end_date", "desc");
+
+        case "inactive":
+            return collection
+                .where("is_active", "==", false)
+                .orderBy("start_date", "desc");
+    }
+}
+
 export async function getExhibitions(): Promise<Exhibition[]> {
     "use cache";
+
+    cacheLife("hours");
 
     const snapshot = await adminDb
         .collection("exhibitions")
         .get();
 
-    const exhibitions = snapshot.docs
-        .map((doc) =>
-            normalizeExhibition(
-                doc.id,
-                doc.data(),
-            ),
-        )
-        .filter(
-            (exhibition) =>
-                exhibition.is_active,
-        );
-
-    return exhibitions.sort((a, b) =>
-        b.start_date.localeCompare(
-            a.start_date,
+    const exhibitions = snapshot.docs.map((doc) =>
+        normalizeExhibition(
+            doc.id,
+            doc.data(),
         ),
     );
+
+    return exhibitions.sort((a, b) => {
+        if (a.is_active !== b.is_active) {
+            return a.is_active ? -1 : 1;
+        }
+
+        return b.start_date.localeCompare(a.start_date);
+    });
 }
 
-export async function getExhibitionById(
-    id: string,
-): Promise<Exhibition | null> {
+export async function getExhibitionById(id: string,): Promise<Exhibition | null> {
     "use cache";
 
     if (!id) {
@@ -613,9 +697,7 @@ export async function getExhibitionById(
     return exhibition;
 }
 
-export async function getExhibitionBySlug(
-    slug: string,
-): Promise<Exhibition | null> {
+export async function getExhibitionBySlug(slug: string,): Promise<Exhibition | null> {
     "use cache";
 
     if (!slug) {
@@ -647,9 +729,7 @@ export async function getExhibitionBySlug(
     return exhibition;
 }
 
-export async function getPreviousEditions(
-    currentExhibition: Exhibition,
-): Promise<Exhibition[]> {
+export async function getPreviousEditions(currentExhibition: Exhibition,): Promise<Exhibition[]> {
     "use cache";
 
     if (
@@ -691,4 +771,159 @@ export async function getPreviousEditions(
                 a.start_date,
             ),
         );
+}
+
+export interface HomepageExhibitionsResult {
+    exhibitions: ExhibitionCardData[];
+    totalCount: number;
+    statusCounts: {
+        ongoing: number;
+        upcoming: number;
+        finished: number;
+    };
+}
+
+export async function getHomepageExhibitions(today: string,): Promise<HomepageExhibitionsResult> {
+    "use cache";
+
+    cacheLife("hours");
+
+    const buckets = [
+        "ongoing",
+        "upcoming",
+        "finished",
+        "inactive",
+    ] as const;
+
+    const [counts, results] = await Promise.all([
+        Promise.all(
+            buckets.map((bucket) =>
+                getBucketCount(bucket, today),
+            ),
+        ),
+
+        Promise.all(
+            buckets.map((bucket) =>
+                getBucketExhibitions(
+                    bucket,
+                    today,
+                    6,
+                ),
+            ),
+        ),
+    ]);
+
+    const exhibitions = results.flat();
+
+    const statusCounts = {
+        ongoing: counts[0],
+        upcoming: counts[1],
+        finished: counts[2],
+    };
+
+    return {
+        exhibitions,
+        totalCount: counts.reduce(
+            (total, count) => total + count,
+            0,
+        ),
+        statusCounts,
+    };
+}
+
+export interface PaginatedExhibitionsResult {
+    exhibitions: ExhibitionCardData[];
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+}
+
+export async function getPaginatedExhibitions(today: string, requestedPage: number, pageSize: number,): Promise<PaginatedExhibitionsResult> {
+    "use cache";
+
+    cacheLife("hours");
+
+    const buckets = [
+        "ongoing",
+        "upcoming",
+        "finished",
+        "inactive",
+    ] as const;
+
+    const counts = await Promise.all(
+        buckets.map((bucket) =>
+            getBucketCount(bucket, today),
+        ),
+    );
+
+    const totalCount = counts.reduce(
+        (total, count) => total + count,
+        0,
+    );
+
+    const totalPages = Math.ceil(
+        totalCount / pageSize,
+    );
+
+    const currentPage = totalPages > 0
+        ? Math.min(Math.max(requestedPage, 1), totalPages)
+        : 1;
+
+    const pageStart = (currentPage - 1) * pageSize;
+    const pageEnd = pageStart + pageSize;
+
+    let bucketStart = 0;
+
+    const pageRequests = buckets.map(
+        (bucket, index) => {
+            const bucketEnd = bucketStart + counts[index];
+
+            const overlapStart = Math.max(
+                pageStart,
+                bucketStart,
+            );
+
+            const overlapEnd = Math.min(
+                pageEnd,
+                bucketEnd,
+            );
+
+            const offset = Math.max(
+                0,
+                overlapStart - bucketStart,
+            );
+
+            const limit = Math.max(
+                0,
+                overlapEnd - overlapStart,
+            );
+
+            bucketStart = bucketEnd;
+
+            return {
+                bucket,
+                offset,
+                limit,
+            };
+        },
+    );
+
+    const results = await Promise.all(
+        pageRequests.map(
+            ({ bucket, offset, limit }) =>
+                getBucketExhibitions(
+                    bucket,
+                    today,
+                    limit,
+                    offset,
+                ),
+        ),
+    );
+
+    return {
+        exhibitions: results.flat(),
+        totalCount,
+        totalPages,
+        currentPage,
+    };
 }

@@ -10,10 +10,10 @@ import {
 
 import type { Locale } from "@/lib/i18n/config";
 import { getExhibitionStatus } from "@/lib/utils/exhibition";
-import type { Exhibition } from "@/types/landingPage/exhibition";
+import type { ExhibitionCardData } from "@/types/landingPage/exhibition";
 
 interface ExhibitionCardProps {
-    exhibition: Exhibition;
+    exhibition: ExhibitionCardData;
     locale: Locale;
     today: string;
     variant?: "dark" | "light";

@@ -1,44 +1,27 @@
-
+// components/sections/exhibition/AllExhibition/ExhibitionsSection.tsx
 import Link from "next/link";
-
-import {
-    FiArrowLeft,
-    FiArrowRight,
-} from "react-icons/fi";
-
+import { FiArrowLeft, FiArrowRight, } from "react-icons/fi";
 import type { Locale } from "@/lib/i18n/config";
-import type { Exhibition } from "@/types/landingPage/exhibition";
-
-import {
-    getExhibitionStatus,
-} from "@/lib/utils/exhibition";
-
+import type { ExhibitionCardData } from "@/types/landingPage/exhibition";
+import { getExhibitionStatus, } from "@/lib/utils/exhibition";
 import ExhibitionCard from "@/components/exhibitions/ExhibitionCard";
 import Reveal from "@/components/animations/Reveal";
-
 import ExhibitionsFilterClient from "./ExhibitionsFilterClient";
 
 interface ExhibitionsSectionProps {
     locale: Locale;
-    exhibitions: Exhibition[];
+    exhibitions: ExhibitionCardData[];
     currentPage: number;
     today: string;
     totalPages: number;
 }
 
-export default function ExhibitionsSection({
-    locale,
-    exhibitions,
-    currentPage,
-    today,
-    totalPages,
-}: ExhibitionsSectionProps) {
+export default function ExhibitionsSection({ locale, exhibitions, currentPage, today, totalPages, }: ExhibitionsSectionProps) {
     const isArabic = locale === "ar";
 
     const getPageHref = (page: number) => {
-        return isArabic
-            ? `/exhibitions?page=${page}/`
-            : `/en/exhibitions?page=${page}/`;
+        const path = isArabic ? "/exhibitions/" : "/en/exhibitions/";
+        return page === 1 ? path : `${path}?page=${page}`;
     };
 
     return (
@@ -146,11 +129,10 @@ export default function ExhibitionsSection({
                                                 : "Previous page"
                                         }
                                         aria-disabled={currentPage === 1}
-                                        className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 ${
-                                            currentPage === 1
-                                                ? "pointer-events-none border-(--theme-secondary)/5 text-(--theme-secondary)/20"
-                                                : "border-(--theme-secondary)/10 bg-white text-(--theme-secondary) hover:border-(--theme-primary)/30 hover:bg-(--theme-primary) hover:text-white"
-                                        }`}
+                                        className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 ${currentPage === 1
+                                            ? "pointer-events-none border-(--theme-secondary)/5 text-(--theme-secondary)/20"
+                                            : "border-(--theme-secondary)/10 bg-white text-(--theme-secondary) hover:border-(--theme-primary)/30 hover:bg-(--theme-primary) hover:text-white"
+                                            }`}
                                     >
                                         {isArabic ? (
                                             <FiArrowRight />
@@ -172,11 +154,10 @@ export default function ExhibitionsSection({
                                                         ? "page"
                                                         : undefined
                                                 }
-                                                className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-all duration-300 ${
-                                                    page === currentPage
-                                                        ? "bg-(--theme-secondary) text-white shadow-sm"
-                                                        : "border border-(--theme-secondary)/10 bg-white text-(--theme-secondary)/60 hover:border-(--theme-primary)/30 hover:bg-(--theme-primary)/5 hover:text-(--theme-secondary)"
-                                                }`}
+                                                className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full px-3 text-sm font-semibold transition-all duration-300 ${page === currentPage
+                                                    ? "bg-(--theme-secondary) text-white shadow-sm"
+                                                    : "border border-(--theme-secondary)/10 bg-white text-(--theme-secondary)/60 hover:border-(--theme-primary)/30 hover:bg-(--theme-primary)/5 hover:text-(--theme-secondary)"
+                                                    }`}
                                             >
                                                 {page}
                                             </Link>
@@ -198,11 +179,10 @@ export default function ExhibitionsSection({
                                         aria-disabled={
                                             currentPage === totalPages
                                         }
-                                        className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 ${
-                                            currentPage === totalPages
-                                                ? "pointer-events-none border-(--theme-secondary)/5 text-(--theme-secondary)/20"
-                                                : "border-(--theme-secondary)/10 bg-white text-(--theme-secondary) hover:border-(--theme-primary)/30 hover:bg-(--theme-primary) hover:text-white"
-                                        }`}
+                                        className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-300 ${currentPage === totalPages
+                                            ? "pointer-events-none border-(--theme-secondary)/5 text-(--theme-secondary)/20"
+                                            : "border-(--theme-secondary)/10 bg-white text-(--theme-secondary) hover:border-(--theme-primary)/30 hover:bg-(--theme-primary) hover:text-white"
+                                            }`}
                                     >
                                         {isArabic ? (
                                             <FiArrowLeft />

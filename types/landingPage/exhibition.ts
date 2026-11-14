@@ -101,3 +101,14 @@ export interface Exhibition {
 
     updated_at: string | null;
 }
+
+export type ExhibitionCardData = Pick<
+    Exhibition,
+    | "id"
+    | "slug"
+    | "title"
+    | "start_date"
+    | "end_date"
+    | "location"
+    | "main_image"
+>;

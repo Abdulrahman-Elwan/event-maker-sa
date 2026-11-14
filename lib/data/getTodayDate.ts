@@ -1,12 +1,10 @@
-
+// lib/data/getTodayDate.ts
 import "server-only";
 import { cacheLife } from "next/cache";
 
 export async function getTodayDate(): Promise<string> {
     "use cache";
-
-    cacheLife("hours");
-
+    cacheLife("minutes");
     return new Intl.DateTimeFormat("en-CA", {
         timeZone: "Asia/Riyadh",
         year: "numeric",

@@ -1,6 +1,7 @@
 // app\[locale]\layout.tsx
 import { Suspense, type CSSProperties } from "react";
 import type { Metadata } from "next";
+import { cacheLife } from "next/cache";
 import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
@@ -10,7 +11,6 @@ import { getActiveTheme } from "@/lib/data/theme";
 import { getHomepageSettings } from "@/lib/data/homepage";
 import { getServices } from "@/lib/data/services";
 import { getContactSettings, getSocialSettings, getCompanyProfileUrl } from "@/lib/data/siteSettings";
-import { getTodayDate } from "@/lib/data/getTodayDate";
 import "../globals.css";
 import WhatsappIcon from "@/components/layout/WhatsappIcon";
 import CookieConsent from "@/components/layout/CookieConsent";
@@ -57,11 +57,14 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
+async function getCurrentYear(): Promise<number> {
+  "use cache";
+  cacheLife("days");
+  return new Date().getFullYear();
+}
+
 /* Locale Layout */
-export default async function LocaleLayout({
-  children,
-  params,
-}: LocaleLayoutProps) {
+export default async function LocaleLayout({ children, params, }: LocaleLayoutProps) {
   const { locale } = await params;
 
   if (!locales.includes(locale as Locale)) {
@@ -72,16 +75,14 @@ export default async function LocaleLayout({
   const isArabic = currentLocale === "ar";
 
   /* Global Website Data */
-  const [homepageSettings, services, contactSettings, socialSettings, companyProfileUrl, today] =
-    await Promise.all([
-      getHomepageSettings(),
-      getServices(),
-      getContactSettings(),
-      getSocialSettings(),
-      getCompanyProfileUrl(),
-      getTodayDate(),
-    ]);
-  const currentYear = Number(today.slice(0, 4));
+  const [homepageSettings, services, contactSettings, socialSettings, companyProfileUrl, currentYear,] = await Promise.all([
+    getHomepageSettings(),
+    getServices(),
+    getContactSettings(),
+    getSocialSettings(),
+    getCompanyProfileUrl(),
+    getCurrentYear(),
+  ]);
   /* Active Theme */
   const theme = await getActiveTheme(homepageSettings);
 

@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -16,44 +17,103 @@ interface HeroSliderProps {
     slides: readonly HeroSlide[];
 }
 
+const AUTOPLAY_DELAY = 7000;
+
 export default function HeroSlider({
     locale,
     slides,
 }: HeroSliderProps) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [pageLoaded, setPageLoaded] = useState(false);
+    const [loadedHeroSrc, setLoadedHeroSrc] = useState("");
 
     const isArabic = locale === "ar";
-    const currentSlide = slides[activeIndex];
 
-    const content = isArabic
-        ? currentSlide.ar
-        : currentSlide.en;
+    const safeActiveIndex =
+        slides.length > 0 ? activeIndex % slides.length : 0;
 
+    const currentSlide = slides[safeActiveIndex];
+
+    const content = currentSlide
+        ? isArabic
+            ? currentSlide.ar
+            : currentSlide.en
+        : null;
+
+    // Wait until the browser finishes loading the page.
     useEffect(() => {
-        if (slides.length <= 1) return;
+        if (document.readyState === "complete") {
+            setPageLoaded(true);
+            return;
+        }
+
+        const handlePageLoad = () => {
+            setPageLoaded(true);
+        };
+
+        window.addEventListener("load", handlePageLoad, {
+            once: true,
+        });
+
+        return () => {
+            window.removeEventListener("load", handlePageLoad);
+        };
+    }, []);
+
+    // Start autoplay only after:
+    // 1. The page has finished loading.
+    // 2. The first hero image has loaded.
+    useEffect(() => {
+        if (
+            slides.length <= 1 ||
+            !pageLoaded ||
+            !slides[0]?.image ||
+            loadedHeroSrc !== slides[0].image
+        ) {
+            return;
+        }
 
         const interval = window.setInterval(() => {
-            setActiveIndex((current) =>
-                current === slides.length - 1 ? 0 : current + 1
-            );
-        }, 7000);
+            setActiveIndex((current) => (current + 1) % slides.length);
+        }, AUTOPLAY_DELAY);
 
-        return () => window.clearInterval(interval);
-    }, [slides.length]);
+        return () => {
+            window.clearInterval(interval);
+        };
+    }, [
+        activeIndex,
+        slides,
+        pageLoaded,
+        loadedHeroSrc,
+    ]);
 
     function goToPrevious() {
+        if (slides.length <= 1) return;
+
         setActiveIndex((current) =>
-            current === 0 ? slides.length - 1 : current - 1
+            (current - 1 + slides.length) % slides.length
         );
     }
 
     function goToNext() {
+        if (slides.length <= 1) return;
+
         setActiveIndex((current) =>
-            current === slides.length - 1 ? 0 : current + 1
+            (current + 1) % slides.length
         );
     }
 
-    const currentNumber = String(activeIndex + 1).padStart(2, "0");
+    if (!currentSlide || !content) {
+        return (
+            <section
+                dir={isArabic ? "rtl" : "ltr"}
+                className="relative h-svh min-h-155 max-h-250 bg-slate-950"
+                aria-label={isArabic ? "الواجهة الرئيسية" : "Main hero"}
+            />
+        );
+    }
+
+    const currentNumber = String(safeActiveIndex + 1).padStart(2, "0");
     const totalNumber = String(slides.length).padStart(2, "0");
 
     return (
@@ -62,71 +122,85 @@ export default function HeroSlider({
             className="relative h-svh min-h-155 max-h-250 overflow-hidden bg-slate-950 text-white"
             aria-label={isArabic ? "الواجهة الرئيسية" : "Main hero"}
         >
-            {/* =========================
-                Background Images
-            ========================== */}
+            {/* Background Images */}
             {slides.map((slide, index) => (
                 <div
                     key={slide.id}
-                    className={`absolute inset-0 transition-opacity duration-1000 ${index === activeIndex
+                    className={`absolute inset-0 transition-opacity duration-1000 ${
+                        index === safeActiveIndex
                             ? "opacity-100"
                             : "opacity-0"
-                        }`}
+                    }`}
+                    aria-hidden="true"
                 >
                     <Image
                         src={slide.image}
-                        alt={slide.ar.eyebrow}
+                        alt={
+                            index === safeActiveIndex
+                                ? isArabic
+                                    ? slide.ar.eyebrow
+                                    : slide.en.eyebrow
+                                : ""
+                        }
                         fill
                         unoptimized
-                        priority={index === 0}
+                        preload={index === 0}
+                        loading={index === 0 ? undefined : "lazy"}
                         sizes="100vw"
-                        className={`object-cover object-center ${index === activeIndex? "hero-image-active": ""}`}
+                        onLoad={
+                            index === 0
+                                ? () => setLoadedHeroSrc(slide.image)
+                                : undefined
+                        }
+                        onError={
+                            index === 0
+                                ? () => setLoadedHeroSrc(slide.image)
+                                : undefined
+                        }
+                        className={`object-cover object-center ${
+                            index === safeActiveIndex
+                                ? "hero-image-active"
+                                : ""
+                        }`}
                     />
                 </div>
             ))}
 
-            {/* =========================
-                Soft Global Overlay
-            ========================== */}
+            {/* Soft Global Overlay */}
             <div className="absolute inset-0 bg-black/20" />
 
-            {/* =========================
-                Content Overlay
-            ========================== */}
+            {/* Content Overlay */}
             <div
-                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${isArabic
+                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${
+                    isArabic
                         ? "right-0 bg-linear-to-l from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
                         : "left-0 bg-linear-to-r from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
-                    }`}
+                }`}
             />
 
-            {/* Extra soft center fade */}
+            {/* Extra Soft Center Fade */}
             <div className="absolute inset-0 bg-linear-to-t from-[var(--theme-secondary)]/45 via-transparent to-[var(--theme-secondary)]/10" />
 
-            {/* =========================
-                Bottom Gradient
-            ========================== */}
+            {/* Bottom Gradient */}
             <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-[var(--theme-secondary)]/65 to-transparent" />
 
-            {/* =========================
-                Main Content
-            ========================== */}
+            {/* Main Content */}
             <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-5 pb-24 pt-24 sm:px-7 lg:px-8 lg:pb-28 lg:pt-24">
                 <div
                     key={currentSlide.id}
-                    className={`w-full ${isArabic
+                    className={`w-full ${
+                        isArabic
                             ? "max-w-2xl"
                             : "max-w-xl lg:max-w-155"
-                        }`}
+                    }`}
                 >
-                    {/* =========================
-                        Title
-                    ========================== */}
+                    {/* Title */}
                     <h1
-                        className={`hero-content-eyebrow font-bold tracking-tight ${isArabic
+                        className={`hero-content-eyebrow font-bold tracking-tight ${
+                            isArabic
                                 ? "text-[clamp(2.35rem,5vw,4.25rem)] leading-[1.15]"
                                 : "text-[clamp(2.1rem,4.2vw,3.8rem)] leading-[1.08]"
-                            }`}
+                        }`}
                     >
                         <span className="block text-white">
                             {content.eyebrow}
@@ -142,21 +216,18 @@ export default function HeroSlider({
                         </span>
                     </h1>
 
-                    {/* =========================
-                        Description
-                    ========================== */}
+                    {/* Description */}
                     <p
-                        className={`hero-content-description mt-5 text-white/80 ${isArabic
+                        className={`hero-content-description mt-5 text-white/80 ${
+                            isArabic
                                 ? "max-w-xl text-[15px] leading-7 sm:text-base sm:leading-8"
                                 : "max-w-lg text-[14px] leading-7 sm:text-[15px] sm:leading-7"
-                            }`}
+                        }`}
                     >
                         {content.description}
                     </p>
 
-                    {/* =========================
-                        CTA Buttons
-                    ========================== */}
+                    {/* CTA Buttons */}
                     <div className="hero-content-buttons mt-7 flex flex-wrap items-center gap-3 sm:mt-8">
                         <Link
                             href={
@@ -166,13 +237,10 @@ export default function HeroSlider({
                             }
                             className="group inline-flex h-11 items-center gap-3 rounded-full px-6 text-sm font-semibold text-slate-950 transition-all duration-300 hover:brightness-110 hover:shadow-lg sm:h-12 sm:px-7"
                             style={{
-                                backgroundColor:
-                                    "var(--theme-primary)",
+                                backgroundColor: "var(--theme-primary)",
                             }}
                         >
-                            <span>
-                                {content.primaryButton}
-                            </span>
+                            <span>{content.primaryButton}</span>
 
                             {isArabic ? (
                                 <FiArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
@@ -195,101 +263,100 @@ export default function HeroSlider({
                 </div>
             </div>
 
-            {/* =========================
-                Slider Controls
-            ========================== */}
-            <div
-                className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${isArabic
-                        ? "right-5 lg:right-8"
-                        : "left-5 lg:left-8"
-                    }`}
-            >
-                {/* Previous */}
-                <button
-                    type="button"
-                    onClick={goToPrevious}
-                    aria-label={
-                        isArabic
-                            ? "الشريحة السابقة"
-                            : "Previous slide"
-                    }
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition-all duration-300 hover:border-white hover:bg-white/10 sm:h-10 sm:w-10"
-                >
-                    {isArabic ? (
-                        <FiArrowRight />
-                    ) : (
-                        <FiArrowLeft />
-                    )}
-                </button>
-
-                {/* Counter */}
-                <div
-                    dir="ltr"
-                    className="flex items-center gap-2 text-xs tracking-widest sm:text-sm"
-                >
-                    <span className="font-semibold text-white">
-                        {currentNumber}
-                    </span>
-
-                    <span className="text-white/30">/</span>
-
-                    <span className="text-white/50">
-                        {totalNumber}
-                    </span>
-                </div>
-
-                {/* Next */}
-                <button
-                    type="button"
-                    onClick={goToNext}
-                    aria-label={
-                        isArabic
-                            ? "الشريحة التالية"
-                            : "Next slide"
-                    }
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition-all duration-300 hover:border-white hover:bg-white/10 sm:h-10 sm:w-10"
-                >
-                    {isArabic ? (
-                        <FiArrowLeft />
-                    ) : (
-                        <FiArrowRight />
-                    )}
-                </button>
-            </div>
-
-            {/* =========================
-                Side Slide Indicator
-            ========================== */}
-            <div className="absolute bottom-8 right-5 z-20 hidden lg:block">
-                <div className="flex items-center gap-2">
-                    {slides.map((slide, index) => (
+            {/* Slider Controls */}
+            {slides.length > 1 && (
+                <>
+                    <div
+                        className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${
+                            isArabic
+                                ? "right-5 lg:right-8"
+                                : "left-5 lg:left-8"
+                        }`}
+                    >
                         <button
-                            key={slide.id}
                             type="button"
+                            onClick={goToPrevious}
                             aria-label={
                                 isArabic
-                                    ? `الانتقال إلى الشريحة ${index + 1}`
-                                    : `Go to slide ${index + 1}`
+                                    ? "الشريحة السابقة"
+                                    : "Previous slide"
                             }
-                            onClick={() =>
-                                setActiveIndex(index)
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition-all duration-300 hover:border-white hover:bg-white/10 sm:h-10 sm:w-10"
+                        >
+                            {isArabic ? <FiArrowRight /> : <FiArrowLeft />}
+                        </button>
+
+                        <div
+                            dir="ltr"
+                            className="flex items-center gap-2 text-xs tracking-widest sm:text-sm"
+                            aria-live="off"
+                        >
+                            <span className="font-semibold text-white">
+                                {currentNumber}
+                            </span>
+
+                            <span className="text-white/30">/</span>
+
+                            <span className="text-white/50">
+                                {totalNumber}
+                            </span>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={goToNext}
+                            aria-label={
+                                isArabic
+                                    ? "الشريحة التالية"
+                                    : "Next slide"
                             }
-                            className={`h-1 rounded-full transition-all duration-500 ${index === activeIndex
-                                    ? "w-10"
-                                    : "w-4 bg-white/30 hover:bg-white/60"
-                                }`}
-                            style={
-                                index === activeIndex
-                                    ? {
-                                        backgroundColor:
-                                            "var(--theme-primary)",
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-white/30 text-white transition-all duration-300 hover:border-white hover:bg-white/10 sm:h-10 sm:w-10"
+                        >
+                            {isArabic ? <FiArrowLeft /> : <FiArrowRight />}
+                        </button>
+                    </div>
+
+                    {/* Side Slide Indicator */}
+                    <div
+                        className={`absolute bottom-8 z-20 hidden lg:block ${
+                            isArabic ? "left-8" : "right-8"
+                        }`}
+                    >
+                        <div className="flex items-center gap-2">
+                            {slides.map((slide, index) => (
+                                <button
+                                    key={slide.id}
+                                    type="button"
+                                    aria-label={
+                                        isArabic
+                                            ? `الانتقال إلى الشريحة ${index + 1}`
+                                            : `Go to slide ${index + 1}`
                                     }
-                                    : undefined
-                            }
-                        />
-                    ))}
-                </div>
-            </div>
+                                    aria-current={
+                                        index === safeActiveIndex
+                                            ? "true"
+                                            : undefined
+                                    }
+                                    onClick={() => setActiveIndex(index)}
+                                    className={`h-1 rounded-full transition-all duration-500 ${
+                                        index === safeActiveIndex
+                                            ? "w-10"
+                                            : "w-4 bg-white/30 hover:bg-white/60"
+                                    }`}
+                                    style={
+                                        index === safeActiveIndex
+                                            ? {
+                                                backgroundColor:
+                                                    "var(--theme-primary)",
+                                            }
+                                            : undefined
+                                    }
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </>
+            )}
         </section>
     );
 }
