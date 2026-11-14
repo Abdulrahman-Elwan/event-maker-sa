@@ -126,22 +126,15 @@ export default function HeroSlider({
             {slides.map((slide, index) => (
                 <div
                     key={slide.id}
-                    className={`absolute inset-0 transition-opacity duration-1000 ${
-                        index === safeActiveIndex
-                            ? "opacity-100"
-                            : "opacity-0"
-                    }`}
+                    className={`absolute inset-0 transition-opacity duration-1000 ${index === safeActiveIndex
+                        ? "opacity-100"
+                        : "opacity-0"
+                        }`}
                     aria-hidden="true"
                 >
                     <Image
                         src={slide.image}
-                        alt={
-                            index === safeActiveIndex
-                                ? isArabic
-                                    ? slide.ar.eyebrow
-                                    : slide.en.eyebrow
-                                : ""
-                        }
+                        alt={isArabic ? slide.ar.title : slide.en.title}
                         fill
                         preload={index === 0}
                         loading={index === 0 ? undefined : "lazy"}
@@ -156,11 +149,10 @@ export default function HeroSlider({
                                 ? () => setLoadedHeroSrc(slide.image)
                                 : undefined
                         }
-                        className={`object-cover object-center ${
-                            index === safeActiveIndex
-                                ? "hero-image-active"
-                                : ""
-                        }`}
+                        className={`object-cover object-center ${index === safeActiveIndex
+                            ? "hero-image-active"
+                            : ""
+                            }`}
                     />
                 </div>
             ))}
@@ -170,11 +162,10 @@ export default function HeroSlider({
 
             {/* Content Overlay */}
             <div
-                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${
-                    isArabic
-                        ? "right-0 bg-linear-to-l from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
-                        : "left-0 bg-linear-to-r from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
-                }`}
+                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${isArabic
+                    ? "right-0 bg-linear-to-l from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
+                    : "left-0 bg-linear-to-r from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
+                    }`}
             />
 
             {/* Extra Soft Center Fade */}
@@ -187,19 +178,17 @@ export default function HeroSlider({
             <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-5 pb-24 pt-24 sm:px-7 lg:px-8 lg:pb-28 lg:pt-24">
                 <div
                     key={currentSlide.id}
-                    className={`w-full ${
-                        isArabic
-                            ? "max-w-2xl"
-                            : "max-w-xl lg:max-w-155"
-                    }`}
+                    className={`w-full ${isArabic
+                        ? "max-w-2xl"
+                        : "max-w-xl lg:max-w-155"
+                        }`}
                 >
                     {/* Title */}
                     <h1
-                        className={`hero-content-eyebrow font-bold tracking-tight ${
-                            isArabic
-                                ? "text-[clamp(2.35rem,5vw,4.25rem)] leading-[1.15]"
-                                : "text-[clamp(2.1rem,4.2vw,3.8rem)] leading-[1.08]"
-                        }`}
+                        className={`hero-content-eyebrow font-bold tracking-tight ${isArabic
+                            ? "text-[clamp(2.35rem,5vw,4.25rem)] leading-[1.15]"
+                            : "text-[clamp(2.1rem,4.2vw,3.8rem)] leading-[1.08]"
+                            }`}
                     >
                         <span className="block text-white">
                             {content.eyebrow}
@@ -217,11 +206,10 @@ export default function HeroSlider({
 
                     {/* Description */}
                     <p
-                        className={`hero-content-description mt-5 text-white/80 ${
-                            isArabic
-                                ? "max-w-xl text-[15px] leading-7 sm:text-base sm:leading-8"
-                                : "max-w-lg text-[14px] leading-7 sm:text-[15px] sm:leading-7"
-                        }`}
+                        className={`hero-content-description mt-5 text-white/80 ${isArabic
+                            ? "max-w-xl text-[15px] leading-7 sm:text-base sm:leading-8"
+                            : "max-w-lg text-[14px] leading-7 sm:text-[15px] sm:leading-7"
+                            }`}
                     >
                         {content.description}
                     </p>
@@ -266,11 +254,10 @@ export default function HeroSlider({
             {slides.length > 1 && (
                 <>
                     <div
-                        className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${
-                            isArabic
-                                ? "right-5 lg:right-8"
-                                : "left-5 lg:left-8"
-                        }`}
+                        className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${isArabic
+                            ? "right-5 lg:right-8"
+                            : "left-5 lg:left-8"
+                            }`}
                     >
                         <button
                             type="button"
@@ -317,9 +304,8 @@ export default function HeroSlider({
 
                     {/* Side Slide Indicator */}
                     <div
-                        className={`absolute bottom-8 z-20 hidden lg:block ${
-                            isArabic ? "left-8" : "right-8"
-                        }`}
+                        className={`absolute bottom-8 z-20 hidden lg:block ${isArabic ? "left-8" : "right-8"
+                            }`}
                     >
                         <div className="flex items-center gap-2">
                             {slides.map((slide, index) => (
@@ -337,11 +323,10 @@ export default function HeroSlider({
                                             : undefined
                                     }
                                     onClick={() => setActiveIndex(index)}
-                                    className={`h-1 rounded-full transition-all duration-500 ${
-                                        index === safeActiveIndex
-                                            ? "w-10"
-                                            : "w-4 bg-white/30 hover:bg-white/60"
-                                    }`}
+                                    className={`h-1 rounded-full transition-all duration-500 ${index === safeActiveIndex
+                                        ? "w-10"
+                                        : "w-4 bg-white/30 hover:bg-white/60"
+                                        }`}
                                     style={
                                         index === safeActiveIndex
                                             ? {

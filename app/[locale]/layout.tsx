@@ -15,17 +15,7 @@ import "../globals.css";
 import WhatsappIcon from "@/components/layout/WhatsappIcon";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { SITE_URL } from "@/lib/site";
-
-/* Fonts */
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import GoogleFontsLoader from "@/components/layout/GoogleFontsLoader";
 
 /* Google Fonts URL */
 function getGoogleFontsUrl(arabicFont: string, englishFont: string) {
@@ -100,11 +90,7 @@ export default async function LocaleLayout({ children, params, }: LocaleLayoutPr
   } as CSSProperties;
 
   return (
-    <html
-      lang={isArabic ? "ar" : "en"}
-      dir={isArabic ? "rtl" : "ltr"}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang={isArabic ? "ar" : "en"} dir={isArabic ? "rtl" : "ltr"} className={`h-full antialiased`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -112,7 +98,8 @@ export default async function LocaleLayout({ children, params, }: LocaleLayoutPr
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        <link rel="stylesheet" href={googleFontsUrl} />
+
+        <GoogleFontsLoader href={googleFontsUrl} />
       </head>
 
       <body className="min-h-full flex flex-col" style={themeStyles}>
