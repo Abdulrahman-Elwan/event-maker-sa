@@ -17,44 +17,12 @@ interface HeroSliderProps {
     slides: readonly HeroSlide[];
 }
 
-const AUTOPLAY_DELAY = 4000;
+const AUTOPLAY_DELAY = 7000;
 
-// Optimize Cloudinary images according to the requested screen width.
-function cloudinaryHeroLoader({ src, width, }: { src: string; width: number; }) {
-    const uploadMarker = "/image/upload/";
-    const uploadIndex = src.indexOf(uploadMarker);
-
-    // Keep non-Cloudinary images unchanged.
-    if (uploadIndex === -1) return src;
-
-    const url = new URL(src);
-
-    const imagePath = url.pathname.slice(
-        uploadIndex + uploadMarker.length
-    );
-
-    // Stronger compression for smaller screens.
-    const quality =
-        width <= 1080
-            ? "q_auto:eco"
-            : "q_auto:good";
-
-    const transformations = [
-        "f_auto",
-        quality,
-        `w_${width}`,
-        "c_limit",
-    ].join(",");
-
-    return (
-        `${url.origin}` +
-        `${url.pathname.slice(0, uploadIndex + uploadMarker.length)}` +
-        `${transformations}/${imagePath}` +
-        `${url.search}`
-    );
-}
-
-export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
+export default function HeroSlider({
+    locale,
+    slides,
+}: HeroSliderProps) {
     const [activeIndex, setActiveIndex] = useState(0);
     const [pageLoaded, setPageLoaded] = useState(false);
     const [loadedHeroSrc, setLoadedHeroSrc] = useState("");
@@ -154,72 +122,59 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
             className="relative h-svh min-h-155 max-h-250 overflow-hidden bg-slate-950 text-white"
             aria-label={isArabic ? "الواجهة الرئيسية" : "Main hero"}
         >
-
             {/* Background Images */}
-            {slides.map((slide, index) => {
-                const isActive = index === safeActiveIndex;
-
-                const nextIndex = (safeActiveIndex + 1) % slides.length;
-                const isNext = index === nextIndex;
-
-                // Render only the current and next slide.
-                if (!isActive && !isNext) return null;
-
-                return (
-                    <div
-                        key={slide.id}
-                        className={`absolute inset-0 transition-opacity duration-1000 ${isActive ? "opacity-100" : "opacity-0"
-                            }`}
-                        aria-hidden="true"
-                    >
-                        <Image
-                            src={slide.image}
-                            alt={
-                                isActive
-                                    ? isArabic
-                                        ? slide.ar.eyebrow
-                                        : slide.en.eyebrow
-                                    : ""
-                            }
-                            fill
-                            loader={cloudinaryHeroLoader}
-                            preload={index === 0}
-                            loading={
-                                index === 0
-                                    ? undefined
-                                    : isActive
-                                        ? "eager"
-                                        : "lazy"
-                            }
-                            fetchPriority={isActive ? "high" : "low"}
-                            sizes="100vw"
-                            quality={75}
-                            onLoad={
-                                index === 0
-                                    ? () => setLoadedHeroSrc(slide.image)
-                                    : undefined
-                            }
-                            onError={
-                                index === 0
-                                    ? () => setLoadedHeroSrc(slide.image)
-                                    : undefined
-                            }
-                            className={`object-cover object-center ${isActive ? "hero-image-active" : ""
-                                }`}
-                        />
-                    </div>
-                );
-            })}
+            {slides.map((slide, index) => (
+                <div
+                    key={slide.id}
+                    className={`absolute inset-0 transition-opacity duration-1000 ${
+                        index === safeActiveIndex
+                            ? "opacity-100"
+                            : "opacity-0"
+                    }`}
+                    aria-hidden="true"
+                >
+                    <Image
+                        src={slide.image}
+                        alt={
+                            index === safeActiveIndex
+                                ? isArabic
+                                    ? slide.ar.eyebrow
+                                    : slide.en.eyebrow
+                                : ""
+                        }
+                        fill
+                        preload={index === 0}
+                        loading={index === 0 ? undefined : "lazy"}
+                        sizes="100vw"
+                        onLoad={
+                            index === 0
+                                ? () => setLoadedHeroSrc(slide.image)
+                                : undefined
+                        }
+                        onError={
+                            index === 0
+                                ? () => setLoadedHeroSrc(slide.image)
+                                : undefined
+                        }
+                        className={`object-cover object-center ${
+                            index === safeActiveIndex
+                                ? "hero-image-active"
+                                : ""
+                        }`}
+                    />
+                </div>
+            ))}
 
             {/* Soft Global Overlay */}
             <div className="absolute inset-0 bg-black/20" />
 
             {/* Content Overlay */}
             <div
-                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${isArabic
-                    ? "right-0 bg-linear-to-l from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
-                    : "left-0 bg-linear-to-r from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
-                    }`}
+                className={`absolute inset-y-0 w-[90%] sm:w-[80%] lg:w-[68%] ${
+                    isArabic
+                        ? "right-0 bg-linear-to-l from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
+                        : "left-0 bg-linear-to-r from-[var(--theme-secondary)]/75 via-[var(--theme-secondary)]/40 to-transparent"
+                }`}
             />
 
             {/* Extra Soft Center Fade */}
@@ -232,17 +187,19 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
             <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-5 pb-24 pt-24 sm:px-7 lg:px-8 lg:pb-28 lg:pt-24">
                 <div
                     key={currentSlide.id}
-                    className={`w-full ${isArabic
-                        ? "max-w-2xl"
-                        : "max-w-xl lg:max-w-155"
-                        }`}
+                    className={`w-full ${
+                        isArabic
+                            ? "max-w-2xl"
+                            : "max-w-xl lg:max-w-155"
+                    }`}
                 >
                     {/* Title */}
                     <h1
-                        className={`hero-content-eyebrow font-bold tracking-tight ${isArabic
-                            ? "text-[clamp(2.35rem,5vw,4.25rem)] leading-[1.15]"
-                            : "text-[clamp(2.1rem,4.2vw,3.8rem)] leading-[1.08]"
-                            }`}
+                        className={`hero-content-eyebrow font-bold tracking-tight ${
+                            isArabic
+                                ? "text-[clamp(2.35rem,5vw,4.25rem)] leading-[1.15]"
+                                : "text-[clamp(2.1rem,4.2vw,3.8rem)] leading-[1.08]"
+                        }`}
                     >
                         <span className="block text-white">
                             {content.eyebrow}
@@ -260,10 +217,11 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
 
                     {/* Description */}
                     <p
-                        className={`hero-content-description mt-5 text-white/80 ${isArabic
-                            ? "max-w-xl text-[15px] leading-7 sm:text-base sm:leading-8"
-                            : "max-w-lg text-[14px] leading-7 sm:text-[15px] sm:leading-7"
-                            }`}
+                        className={`hero-content-description mt-5 text-white/80 ${
+                            isArabic
+                                ? "max-w-xl text-[15px] leading-7 sm:text-base sm:leading-8"
+                                : "max-w-lg text-[14px] leading-7 sm:text-[15px] sm:leading-7"
+                        }`}
                     >
                         {content.description}
                     </p>
@@ -308,10 +266,11 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
             {slides.length > 1 && (
                 <>
                     <div
-                        className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${isArabic
-                            ? "right-5 lg:right-8"
-                            : "left-5 lg:left-8"
-                            }`}
+                        className={`absolute bottom-7 z-20 flex items-center gap-2 sm:bottom-8 sm:gap-5 ${
+                            isArabic
+                                ? "right-5 lg:right-8"
+                                : "left-5 lg:left-8"
+                        }`}
                     >
                         <button
                             type="button"
@@ -358,8 +317,9 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
 
                     {/* Side Slide Indicator */}
                     <div
-                        className={`absolute bottom-8 z-20 hidden lg:block ${isArabic ? "left-8" : "right-8"
-                            }`}
+                        className={`absolute bottom-8 z-20 hidden lg:block ${
+                            isArabic ? "left-8" : "right-8"
+                        }`}
                     >
                         <div className="flex items-center gap-2">
                             {slides.map((slide, index) => (
@@ -377,10 +337,11 @@ export default function HeroSlider({ locale, slides, }: HeroSliderProps) {
                                             : undefined
                                     }
                                     onClick={() => setActiveIndex(index)}
-                                    className={`h-1 rounded-full transition-all duration-500 ${index === safeActiveIndex
-                                        ? "w-10"
-                                        : "w-4 bg-white/30 hover:bg-white/60"
-                                        }`}
+                                    className={`h-1 rounded-full transition-all duration-500 ${
+                                        index === safeActiveIndex
+                                            ? "w-10"
+                                            : "w-4 bg-white/30 hover:bg-white/60"
+                                    }`}
                                     style={
                                         index === safeActiveIndex
                                             ? {
