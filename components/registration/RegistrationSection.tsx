@@ -1,28 +1,20 @@
-
+// components/registration/RegistrationSection.tsx
 "use client";
-
 import Image from "next/image";
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 import {
     FiUser,
     FiBriefcase,
     FiMapPin,
     FiExternalLink,
-    FiArrowUpRight,
     FiCheckCircle,
     FiAlertCircle,
     FiX,
 } from "react-icons/fi";
-
 import type { Locale } from "@/lib/i18n/config";
 import type { Exhibition } from "@/types/landingPage/exhibition";
-import type {
-    VisitorRegistrationFormValues,
-    ExhibitorRegistrationFormValues,
-} from "@/types/registration";
-
-import VisitorRegistrationForm from "./VisitorRegistrationForm";
-import ExhibitorRegistrationForm from "./ExhibitorRegistrationForm";
+import type { VisitorRegistrationFormValues, ExhibitorRegistrationFormValues, } from "@/types/registration";
 
 type RegistrationType = "visitor" | "exhibitor";
 
@@ -36,11 +28,15 @@ interface SubmissionMessage {
     text: string;
 }
 
-export default function RegistrationSection({
-    locale,
-    exhibition,
-}: RegistrationSectionProps) {
+const VisitorRegistrationForm = dynamic(() => import("./VisitorRegistrationForm"));
+const ExhibitorRegistrationForm = dynamic(() => import("./ExhibitorRegistrationForm"));
+
+export default function RegistrationSection({ locale, exhibition, }: RegistrationSectionProps) {
     const isArabic = locale === "ar";
+
+    const sectionRef = useRef<HTMLElement | null>(null);
+    const [visitorFormLoaded, setVisitorFormLoaded] = useState(false);
+    const [exhibitorFormLoaded, setExhibitorFormLoaded] = useState(false);
 
     const [activeForm, setActiveForm] = useState<RegistrationType>("visitor");
     const [submissionMessage, setSubmissionMessage] = useState<SubmissionMessage | null>(null);
@@ -48,10 +44,29 @@ export default function RegistrationSection({
     const exhibitionTitle = exhibition.title[locale];
     const exhibitionAddress = exhibition.location.address[locale];
 
-    const submitRegistration = async (
-        registrationType: RegistrationType,
-        data: VisitorRegistrationFormValues | ExhibitorRegistrationFormValues,
-    ) => {
+    useEffect(() => {
+        const section = sectionRef.current;
+
+        if (!section) return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisitorFormLoaded(true);
+                    observer.disconnect();
+                }
+            },
+            {
+                rootMargin: "300px",
+            }
+        );
+
+        observer.observe(section);
+
+        return () => observer.disconnect();
+    }, []);
+
+    const submitRegistration = async (registrationType: RegistrationType, data: VisitorRegistrationFormValues | ExhibitorRegistrationFormValues,) => {
         setSubmissionMessage(null);
 
         try {
@@ -131,10 +146,17 @@ export default function RegistrationSection({
     const handleTabChange = (type: RegistrationType) => {
         setActiveForm(type);
         setSubmissionMessage(null);
+
+        if (type === "visitor") {
+            setVisitorFormLoaded(true);
+        } else {
+            setExhibitorFormLoaded(true);
+        }
     };
 
     return (
         <section
+            ref={sectionRef}
             id="registration"
             dir="ltr"
             className="bg-[var(--theme-background)] px-4 py-16 sm:px-6 lg:py-24"
@@ -236,11 +258,10 @@ export default function RegistrationSection({
                                 type="button"
                                 onClick={() => handleTabChange("visitor")}
                                 aria-pressed={activeForm === "visitor"}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-all sm:text-sm ${
-                                    activeForm === "visitor"
-                                        ? "bg-[var(--theme-primary)] text-white shadow-sm"
-                                        : "text-[var(--theme-text)]/60 hover:text-[var(--theme-text)]"
-                                }`}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-all sm:text-sm ${activeForm === "visitor"
+                                    ? "bg-[var(--theme-primary)] text-white shadow-sm"
+                                    : "text-[var(--theme-text)]/60 hover:text-[var(--theme-text)]"
+                                    }`}
                             >
                                 <FiUser size={16} />
                                 {isArabic ? "تسجيل زائر" : "Visitor"}
@@ -250,11 +271,10 @@ export default function RegistrationSection({
                                 type="button"
                                 onClick={() => handleTabChange("exhibitor")}
                                 aria-pressed={activeForm === "exhibitor"}
-                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-all sm:text-sm ${
-                                    activeForm === "exhibitor"
-                                        ? "bg-[var(--theme-primary)] text-white shadow-sm"
-                                        : "text-[var(--theme-text)]/60 hover:text-[var(--theme-text)]"
-                                }`}
+                                className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-3 text-xs font-bold transition-all sm:text-sm ${activeForm === "exhibitor"
+                                    ? "bg-[var(--theme-primary)] text-white shadow-sm"
+                                    : "text-[var(--theme-text)]/60 hover:text-[var(--theme-text)]"
+                                    }`}
                             >
                                 <FiBriefcase size={16} />
                                 {isArabic ? "تسجيل عارض" : "Exhibitor"}
@@ -266,28 +286,25 @@ export default function RegistrationSection({
                             <div
                                 role={submissionMessage.type === "error" ? "alert" : "status"}
                                 aria-live="polite"
-                                className={`mb-6 flex items-start gap-3 rounded-xl border p-3 sm:p-4 ${
-                                    submissionMessage.type === "success"
-                                        ? "border-emerald-200 bg-emerald-50"
-                                        : "border-red-200 bg-red-50"
-                                }`}
+                                className={`mb-6 flex items-start gap-3 rounded-xl border p-3 sm:p-4 ${submissionMessage.type === "success"
+                                    ? "border-emerald-200 bg-emerald-50"
+                                    : "border-red-200 bg-red-50"
+                                    }`}
                             >
-                                <span className={`mt-0.5 shrink-0 ${
-                                    submissionMessage.type === "success"
-                                        ? "text-emerald-600"
-                                        : "text-red-600"
-                                }`}>
+                                <span className={`mt-0.5 shrink-0 ${submissionMessage.type === "success"
+                                    ? "text-emerald-600"
+                                    : "text-red-600"
+                                    }`}>
                                     {submissionMessage.type === "success"
                                         ? <FiCheckCircle size={19} />
                                         : <FiAlertCircle size={19} />
                                     }
                                 </span>
 
-                                <p className={`flex-1 text-xs leading-7 ${
-                                    submissionMessage.type === "success"
-                                        ? "text-emerald-800"
-                                        : "text-red-800"
-                                }`}>
+                                <p className={`flex-1 text-xs leading-7 ${submissionMessage.type === "success"
+                                    ? "text-emerald-800"
+                                    : "text-red-800"
+                                    }`}>
                                     {submissionMessage.text}
                                 </p>
 
@@ -317,20 +334,25 @@ export default function RegistrationSection({
                             </p>
                         </div>
 
-                        {/* Forms - Keep mounted to preserve values */}
-                        <div hidden={activeForm !== "visitor"}>
-                            <VisitorRegistrationForm
-                                locale={locale}
-                                onSubmit={handleVisitorSubmit}
-                            />
-                        </div>
+                        {/* Visitor Registration Form */}
+                        {visitorFormLoaded && (
+                            <div hidden={activeForm !== "visitor"}>
+                                <VisitorRegistrationForm
+                                    locale={locale}
+                                    onSubmit={handleVisitorSubmit}
+                                />
+                            </div>
+                        )}
 
-                        <div hidden={activeForm !== "exhibitor"}>
-                            <ExhibitorRegistrationForm
-                                locale={locale}
-                                onSubmit={handleExhibitorSubmit}
-                            />
-                        </div>
+                        {/* Exhibitor Registration Form */}
+                        {exhibitorFormLoaded && (
+                            <div hidden={activeForm !== "exhibitor"}>
+                                <ExhibitorRegistrationForm
+                                    locale={locale}
+                                    onSubmit={handleExhibitorSubmit}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Privacy Note */}

@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiGlobe, FiMenu, FiUser, FiX } from "react-icons/fi";
+import { FiGlobe, FiMenu, FiX } from "react-icons/fi";
 import type { Locale } from "@/lib/i18n/config";
 import { getTranslations } from "@/lib/i18n/translations";
 import Image from "next/image";
 import Logo from "@/public/images/logo.webp";
-import { CgMenuRightAlt } from "react-icons/cg";
 
 interface NavbarProps {
   locale: Locale;
@@ -117,32 +116,26 @@ export default function Navbar({ locale, companyProfileUrl }: NavbarProps) {
     >
       <nav className="mx-auto flex min-h-20 max-w-7xl items-center justify-between px-5 lg:px-8">
         {/* Logo */}
-        <Link
-          href={isArabic ? "/" : "/en/"}
-          onClick={closeMenu}
-          dir="ltr"
-          className="flex shrink-0 items-center gap-1"
-        >
+        <Link href={isArabic ? "/" : "/en/"} onClick={closeMenu} dir="ltr" className="flex shrink-0 items-center gap-1" >
           {/* Logo Symbol */}
-          <div className="h-12 w-10 shrink-0 overflow-hidden">
+          <div className="relative h-12 w-12 shrink-0">
             <Image
               src={Logo}
               alt="Event Maker"
-              width={150}
-              height={100}
+              fill
               priority
-              className="h-12 w-auto max-w-none"
+              sizes="48px"
+              className="object-contain"
             />
           </div>
 
           {/* Logo Text */}
-          <span
-            className={`flex flex-col text-left text-[22px] font-semibold leading-[0.95] transition-colors duration-300 text-white!`}
-          >
+          <span className="flex flex-col text-left text-[22px] font-semibold leading-[0.95] text-white!">
             <span>EVENT</span>
             <span>MAKER</span>
           </span>
         </Link>
+
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-1 lg:flex">
@@ -215,7 +208,7 @@ export default function Navbar({ locale, companyProfileUrl }: NavbarProps) {
             {isMenuOpen ? (
               <FiX className="text-xl" />
             ) : (
-              <CgMenuRightAlt
+              <FiMenu
                 className={`text-[35px] ${isArabic && "rotate-180"}`}
               />
             )}

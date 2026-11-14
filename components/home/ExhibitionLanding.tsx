@@ -1,12 +1,10 @@
+// components/home/ExhibitionLanding.tsx
 import type { Locale } from "@/lib/i18n/config";
 import type { Exhibition } from "@/types/landingPage/exhibition";
-
 import { getPreviousEditions } from "@/lib/data/landingPage/exhibitions";
 import { getExhibitionSectors } from "@/lib/data/landingPage/getExhibitionSectors";
 import { getServices } from "@/lib/data/services";
-
 import { ServicesProvider } from "@/contexts/ServicesContext";
-
 import ExhibitionHero from "../sections/exhibition/ExhibitionHero";
 import ExhibitionOverview from "../sections/exhibition/ExhibitionOverview";
 import ExhibitionAbout from "../sections/exhibition/ExhibitionAbout";
