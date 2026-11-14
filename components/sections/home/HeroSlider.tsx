@@ -143,7 +143,6 @@ export default function HeroSlider({
                                 : ""
                         }
                         fill
-                        unoptimized
                         preload={index === 0}
                         loading={index === 0 ? undefined : "lazy"}
                         sizes="100vw"
