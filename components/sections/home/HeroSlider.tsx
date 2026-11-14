@@ -123,39 +123,46 @@ export default function HeroSlider({
             aria-label={isArabic ? "الواجهة الرئيسية" : "Main hero"}
         >
             {/* Background Images */}
-            {slides.map((slide, index) => (
-                <div
-                    key={slide.id}
-                    className={`absolute inset-0 transition-opacity duration-1000 ${index === safeActiveIndex
-                        ? "opacity-100"
-                        : "opacity-0"
-                        }`}
-                    aria-hidden="true"
-                >
-                    <Image
-                        src={slide.image}
-                        alt={isArabic ? slide.ar.title : slide.en.title}
-                        fill
-                        preload={index === 0}
-                        loading={index === 0 ? undefined : "lazy"}
-                        sizes="100vw"
-                        onLoad={
-                            index === 0
-                                ? () => setLoadedHeroSrc(slide.image)
-                                : undefined
-                        }
-                        onError={
-                            index === 0
-                                ? () => setLoadedHeroSrc(slide.image)
-                                : undefined
-                        }
-                        className={`object-cover object-center ${index === safeActiveIndex
-                            ? "hero-image-active"
-                            : ""
-                            }`}
-                    />
-                </div>
-            ))}
+            {slides.map((slide, index) => {
+                const slideTitle = isArabic ? slide.ar?.title : slide.en?.title;
+                const fallbackTitle = isArabic ? slide.en?.title : slide.ar?.title;
+
+                const imageAlt =
+                    slideTitle?.trim() ||
+                    fallbackTitle?.trim() ||
+                    (isArabic ? `صورة الشريحة الرئيسية رقم ${index + 1}` : `Main hero slide image ${index + 1}`);
+
+                return (
+                    <div
+                        key={slide.id}
+                        className={`absolute inset-0 transition-opacity duration-1000 ${index === safeActiveIndex ? "opacity-100" : "opacity-0"}`}
+                        aria-hidden="true"
+                    >
+                        <Image
+                            src={slide.image}
+                            alt={imageAlt}
+                            fill
+                            preload={index === 0}
+                            loading={index === 0 ? undefined : "lazy"}
+                            sizes="100vw"
+                            onLoad={
+                                index === 0
+                                    ? () => setLoadedHeroSrc(slide.image)
+                                    : undefined
+                            }
+                            onError={
+                                index === 0
+                                    ? () => setLoadedHeroSrc(slide.image)
+                                    : undefined
+                            }
+                            className={`object-cover object-center ${index === safeActiveIndex
+                                ? "hero-image-active"
+                                : ""
+                                }`}
+                        />
+                    </div>
+                );
+            })}
 
             {/* Soft Global Overlay */}
             <div className="absolute inset-0 bg-black/20" />
