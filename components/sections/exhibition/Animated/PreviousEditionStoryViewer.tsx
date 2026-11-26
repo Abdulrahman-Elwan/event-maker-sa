@@ -1,4 +1,4 @@
-// components\sections\exhibition\Animated\PreviousEditionStoryViewer.tsx
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
@@ -14,6 +14,19 @@ import type { Locale } from "@/lib/i18n/config";
 interface PreviousEditionStoryViewerProps {
     locale: Locale;
     exhibitions: Exhibition[];
+}
+
+// Optimize Cloudinary images
+function optimizeCloudinaryImage(
+    url?: string,
+    width = 900
+) {
+    if (!url) return undefined;
+
+    return url.replace(
+        "/image/upload/",
+        `/image/upload/f_auto,q_auto:good,w_${width},c_limit/`
+    );
 }
 
 function getText(
@@ -229,10 +242,11 @@ export default function PreviousEditionStoryViewer({
                                     className="h-1 flex-1 overflow-hidden rounded-full bg-white/30"
                                 >
                                     <span
-                                        className={`block h-full rounded-full transition-all duration-300 ${index <= activeMedia
-                                            ? "w-full bg-[var(--theme-primary)]"
-                                            : "w-0"
-                                            }`}
+                                        className={`block h-full rounded-full transition-all duration-300 ${
+                                            index <= activeMedia
+                                                ? "w-full bg-[var(--theme-primary)]"
+                                                : "w-0"
+                                        }`}
                                     />
                                 </span>
                             ))}
@@ -244,18 +258,28 @@ export default function PreviousEditionStoryViewer({
                         <div className="relative h-11 w-11 flex-none overflow-hidden rounded-full border-2 border-[var(--theme-primary)] bg-white/10">
                             {selectedExhibition.exhibition_logo?.url ? (
                                 <Image
-                                    src={selectedExhibition.exhibition_logo.url}
+                                    src={
+                                        optimizeCloudinaryImage(
+                                            selectedExhibition.exhibition_logo.url,
+                                            120
+                                        )!
+                                    }
                                     alt={getText(selectedExhibition.title, locale)}
                                     fill
-                                    unoptimized
-                                    className="object-cover"
+                                    sizes="44px"
+                                    className="object-contain"
                                 />
                             ) : selectedExhibition.main_image?.url ? (
                                 <Image
-                                    src={selectedExhibition.main_image.url}
+                                    src={
+                                        optimizeCloudinaryImage(
+                                            selectedExhibition.main_image.url,
+                                            120
+                                        )!
+                                    }
                                     alt={getText(selectedExhibition.title, locale)}
                                     fill
-                                    unoptimized
+                                    sizes="44px"
                                     className="object-cover"
                                 />
                             ) : null}
@@ -272,7 +296,9 @@ export default function PreviousEditionStoryViewer({
                         </div>
 
                         <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-bold text-white backdrop-blur-md">
-                            {isArabic ? `النسخة ${selectedExhibition.version || (activeEdition ?? 0) + 1}` : `EDITION ${selectedExhibition.version || (activeEdition ?? 0) + 1}`}
+                            {isArabic
+                                ? `النسخة ${selectedExhibition.version || (activeEdition ?? 0) + 1}`
+                                : `EDITION ${selectedExhibition.version || (activeEdition ?? 0) + 1}`}
                         </span>
                     </div>
 
@@ -290,11 +316,14 @@ export default function PreviousEditionStoryViewer({
                         ) : selectedMedia[activeMedia]?.url ? (
                             <Image
                                 key={selectedMedia[activeMedia].url}
-                                src={selectedMedia[activeMedia].url}
+                                src={
+                                    optimizeCloudinaryImage(
+                                        selectedMedia[activeMedia].url,
+                                        900
+                                    )!
+                                }
                                 alt={getText(selectedExhibition.title, locale)}
                                 fill
-                                unoptimized
-                                priority
                                 sizes="(max-width: 640px) 100vw, 500px"
                                 className="object-contain"
                             />

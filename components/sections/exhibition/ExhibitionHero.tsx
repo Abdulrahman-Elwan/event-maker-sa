@@ -49,19 +49,25 @@ function stripHtml(html: string) {
         .trim();
 }
 
+function optimizeCloudinaryPoster(url?: string) {
+    if (!url) return undefined;
+
+    return url.replace(
+        "/image/upload/",
+        "/image/upload/f_auto,q_auto:good,w_1920,c_limit/"
+    );
+}
+
 export default function ExhibitionHero({
     locale,
     exhibition,
     today,
 }: ExhibitionHeroProps) {
     const isArabic = locale === "ar";
-
     const title = exhibition.title[locale];
     const description = exhibition.description[locale];
     const cleanDescription = stripHtml(description);
-
-    const location =
-        exhibition.location?.address?.[locale] ?? "";
+    const location =exhibition.location?.address?.[locale] ?? "";
 
     const startDate = formatDate(
         exhibition.start_date,
@@ -80,6 +86,7 @@ export default function ExhibitionHero({
 
     const videoSrc = exhibition.hero_background_video?.url;
     const poster = exhibition.main_image?.url;
+    const videoPoster = optimizeCloudinaryPoster(poster);
 
     const visitorRegisterUrl = isArabic
         ? `/booking/visitor/${exhibition.slug}/`
@@ -100,7 +107,7 @@ export default function ExhibitionHero({
                     <video
                         className="absolute inset-0 h-full w-full object-cover object-center"
                         src={videoSrc}
-                        poster={poster}
+                        poster={videoPoster}
                         autoPlay
                         muted
                         loop
