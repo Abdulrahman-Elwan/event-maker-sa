@@ -419,6 +419,21 @@ function normalizePortfolioPdf(
     };
 }
 
+function normalizeSeriesIds(data: FirebaseFirestore.DocumentData): string[] {
+    const seriesIds = Array.isArray(data.series_ids)
+        ? data.series_ids
+        : typeof data.series_id === "string"
+            ? [data.series_id]
+            : [];
+
+    return [...new Set(
+        seriesIds.filter(
+            (id: unknown): id is string =>
+                typeof id === "string" && id.trim().length > 0
+        )
+    )];
+}
+
 export function normalizeExhibition(id: string, data: FirebaseFirestore.DocumentData,): Exhibition {
     const startDate = normalizeDate(data.start_date)?.slice(0, 10) ?? "";
     const endDate = normalizeDate(data.end_date)?.slice(0, 10) ?? "";
@@ -471,10 +486,7 @@ export function normalizeExhibition(id: string, data: FirebaseFirestore.Document
                 )
                 : [],
 
-        series_id:
-            typeof data.series_id === "string"
-                ? data.series_id
-                : "",
+        series_ids: normalizeSeriesIds(data),
 
         speakers: normalizeSpeakers(
             data.speakers,
@@ -501,6 +513,11 @@ export function normalizeExhibition(id: string, data: FirebaseFirestore.Document
         main_video:
             normalizeImage(
                 data.main_video,
+            ),
+
+        hero_background_video:
+            normalizeImage(
+                data.hero_background_video,
             ),
 
         exhibition_logo:
@@ -733,43 +750,48 @@ export async function getPreviousEditions(currentExhibition: Exhibition,): Promi
     "use cache";
 
     if (
-        !currentExhibition.series_id ||
+        !currentExhibition.series_ids?.length ||
         !currentExhibition.start_date
     ) {
         return [];
     }
 
+    const currentSeriesIds = new Set(
+        currentExhibition.series_ids
+    );
+
     const exhibitions = await getExhibitions();
 
     return exhibitions
         .filter((exhibition) => {
-            if (
-                exhibition.id ===
-                currentExhibition.id
-            ) {
+            // استبعاد المعرض الحالي
+            if (exhibition.id === currentExhibition.id) {
                 return false;
             }
 
-            if (
-                exhibition.series_id !==
-                currentExhibition.series_id
-            ) {
+            // لازم يكون المعرض مرتبطًا بسلسلة واحدة على الأقل
+            // من السلاسل المرتبطة بالمعرض الحالي
+            const hasMatchingSeries = exhibition.series_ids?.some(
+                (seriesId) => currentSeriesIds.has(seriesId)
+            );
+
+            if (!hasMatchingSeries) {
                 return false;
             }
 
+            // استبعاد المعارض التي ليس لها تاريخ انتهاء
             if (!exhibition.end_date) {
                 return false;
             }
 
+            // إظهار النسخ التي انتهت قبل بداية المعرض الحالي
             return (
                 exhibition.end_date <
                 currentExhibition.start_date
             );
         })
         .sort((a, b) =>
-            b.start_date.localeCompare(
-                a.start_date,
-            ),
+            b.start_date.localeCompare(a.start_date)
         );
 }
 

@@ -1,13 +1,8 @@
-
+// components\sections\exhibition\PreviousEditionsSection.tsx
 import Image from "next/image";
 import Link from "next/link";
-
 import type { Locale } from "@/lib/i18n/config";
-import type {
-    Exhibition,
-    ExhibitionMedia,
-} from "@/types/landingPage/exhibition";
-
+import type {Exhibition,ExhibitionMedia,} from "@/types/landingPage/exhibition";
 import Reveal from "@/components/animations/Reveal";
 
 import PreviousEditionStoryTrigger from "./Animated/PreviousEditionStoryTrigger";
@@ -60,10 +55,7 @@ function getYear(date: string, locale: Locale) {
     );
 }
 
-export default function PreviousEditionsSection({
-    locale,
-    exhibitions,
-}: PreviousEditionsSectionProps) {
+export default function PreviousEditionsSection({locale,exhibitions,}: PreviousEditionsSectionProps) {
     if (!exhibitions?.length) return null;
 
     const isArabic = locale === "ar";

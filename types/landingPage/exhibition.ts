@@ -65,7 +65,7 @@ export interface Exhibition {
 
     category_ids: string[];
 
-    series_id: string;
+    series_ids: string[];
 
     sector_ids: string[];
 
@@ -80,6 +80,8 @@ export interface Exhibition {
     main_image: ExhibitionImage | null;
 
     main_video: ExhibitionImage | null;
+
+    hero_background_video: ExhibitionImage | null;
 
     exhibition_logo: ExhibitionImage | null;
 

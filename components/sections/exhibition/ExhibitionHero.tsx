@@ -78,7 +78,7 @@ export default function ExhibitionHero({
     const isOngoing = status === "ongoing";
     const isUpcoming = status === "upcoming";
 
-    const videoSrc = exhibition.main_video?.url;
+    const videoSrc = exhibition.hero_background_video?.url;
     const poster = exhibition.main_image?.url;
 
     const visitorRegisterUrl = isArabic
@@ -124,7 +124,7 @@ export default function ExhibitionHero({
 
             {/* Dark Overlay */}
             <div className="absolute inset-0 -z-20 bg-black/55" />
-            <div className="absolute inset-0 -z-10 bg-(--theme-secondary)/65" />
+            <div className="absolute inset-0 -z-10 bg-(--theme-secondary)/50" />
 
             {/* Content */}
             <div className="relative z-10 flex min-h-svh items-center justify-center px-5 pb-14 pt-28 sm:px-8 sm:pb-16 lg:px-12">
@@ -282,7 +282,7 @@ export default function ExhibitionHero({
                             </div>
 
                             {/* Location */}
-                            <div className="flex items-center justify-center gap-3 border-white/15 text-start sm:border-s">
+                            <div className="flex items-center justify-center gap-3 border-white/15 text-start sm:border-s px-2">
                                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--theme-primary)/40 bg-black/20 text-(--theme-primary) backdrop-blur-md">
                                     <FiMapPin className="text-lg" />
                                 </div>
@@ -303,13 +303,13 @@ export default function ExhibitionHero({
                             {/* Exhibition Logo */}
                             {exhibition.exhibition_logo?.url && (
                                 <div className="flex items-center justify-center border-white/15 pt-2 sm:border-s sm:pt-0">
-                                    <div className="flex min-h-16 items-center justify-center rounded-2xl bg-white px-5 py-2 shadow-lg">
+                                    <div className="flex min-h-16 items-center justify-center rounded-2xl bg-white p-2 shadow-lg">
                                         <Image
                                             src={exhibition.exhibition_logo.url}
                                             alt={title}
                                             width={220}
                                             height={80}
-                                            className="max-h-14 w-auto max-w-52 object-contain"
+                                            className="max-h-14 w-auto max-w-52 object-contain rounded-2xl"
                                         />
                                     </div>
                                 </div>

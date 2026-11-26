@@ -67,7 +67,6 @@ export default function ExhibitionOverview({
             <div className="relative mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
                 <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 xl:gap-18">
                     {/* Media */}
-
                     <Reveal
                         className="relative order-2 lg:order-1"
                         delay={100}
@@ -75,6 +74,7 @@ export default function ExhibitionOverview({
                         threshold={0.2}
                     >
                         <div className="relative aspect-16/10 overflow-hidden rounded-[20px] border border-black/10 bg-black shadow-[0_20px_60px_rgba(0,0,0,0.12)] dark:border-white/10">
+
                             {image ? (
                                 <Image
                                     src={image}
@@ -95,13 +95,21 @@ export default function ExhibitionOverview({
                                 <div className="flex h-full w-full items-center justify-center bg-(--theme-secondary)" />
                             )}
 
-                            {/* Media Overlay */}
-
                             {video && (
                                 <>
                                     <div className="pointer-events-none absolute inset-0 bg-black/15" />
                                     <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-t from-black/75 to-transparent" />
-                                    <VideoModal video={video} playLabel={locale === "ar" ? "تشغيل فيديو المعرض" : "Play exhibition video"} closeLabel={locale === "ar" ? "إغلاق الفيديو" : "Close video"} modalLabel={locale === "ar" ? "فيديو المعرض" : "Exhibition video"} />
+
+                                    <VideoModal
+                                        video={video}
+                                        playLabel={
+                                            isArabic
+                                                ? "تشغيل فيديو المعرض"
+                                                : "Play exhibition video"
+                                        }
+                                        closeLabel={isArabic ? "إغلاق الفيديو" : "Close video"}
+                                        modalLabel={isArabic ? "فيديو المعرض" : "Exhibition video"}
+                                    />
                                 </>
                             )}
                         </div>

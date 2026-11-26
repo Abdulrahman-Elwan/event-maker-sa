@@ -1,4 +1,4 @@
-// components/registration/VisitorRegistrationForm.tsx
+// components\registration\VisitorRegistrationForm.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -38,12 +38,8 @@ export default function VisitorRegistrationForm({
     const handleFormSubmit = async (
         values: VisitorRegistrationFormValues
     ) => {
-        try {
-            await onSubmit(values);
-            reset();
-        } catch (error) {
-            console.error("Visitor registration submission error:", error);
-        }
+        await onSubmit(values);
+        reset();
     };
 
     const labels = {
@@ -62,7 +58,7 @@ export default function VisitorRegistrationForm({
     };
 
     const inputClass =
-        "w-full rounded-xl border border-[var(--theme-text)]/15 bg-transparent px-4 py-3 text-sm text-[var(--theme-text)] outline-none transition placeholder:text-[var(--theme-text)]/40 focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/10";
+        "w-full rounded-xl border border-[var(--theme-text)]/15 bg-transparent px-4 py-3 text-sm text-[var(--theme-text)] outline-none transition placeholder:text-[var(--theme-text)]/40 focus:border-[var(--theme-primary)] focus:ring-2 focus:ring-[var(--theme-primary)]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
     const labelClass =
         "mb-2 block text-sm font-medium text-[var(--theme-text)]";
@@ -72,106 +68,109 @@ export default function VisitorRegistrationForm({
             dir={isArabic ? "rtl" : "ltr"}
             onSubmit={handleSubmit(handleFormSubmit)}
             noValidate
+            aria-busy={isSubmitting}
             className="space-y-5"
         >
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <div>
-                    <label className={labelClass}>
-                        {labels.name} *
-                    </label>
-                    <input
-                        {...register("name")}
-                        type="text"
-                        autoComplete="name"
-                        placeholder={labels.name}
-                        className={inputClass}
-                    />
-                    {errors.name && (
-                        <p className="mt-1.5 text-xs text-red-500">
-                            {errors.name.message}
-                        </p>
-                    )}
+            <fieldset disabled={isSubmitting} className="space-y-5">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div>
+                        <label className={labelClass}>
+                            {labels.name} *
+                        </label>
+                        <input
+                            {...register("name")}
+                            type="text"
+                            autoComplete="name"
+                            placeholder={labels.name}
+                            className={inputClass}
+                        />
+                        {errors.name && (
+                            <p className="mt-1.5 text-xs text-red-500">
+                                {errors.name.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div>
+                        <label className={labelClass}>
+                            {labels.email} *
+                        </label>
+                        <input
+                            {...register("email")}
+                            type="email"
+                            autoComplete="email"
+                            placeholder="example@email.com"
+                            className={inputClass}
+                        />
+                        {errors.email && (
+                            <p className="mt-1.5 text-xs text-red-500">
+                                {errors.email.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label className={labelClass}>
+                            {labels.phone} *
+                        </label>
+                        <input
+                            {...register("phone")}
+                            type="tel"
+                            autoComplete="tel"
+                            placeholder="+966 5X XXX XXXX"
+                            dir="ltr"
+                            className={inputClass}
+                        />
+                        {errors.phone && (
+                            <p className="mt-1.5 text-xs text-red-500">
+                                {errors.phone.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label className={labelClass}>
+                            {labels.opportunity} *
+                        </label>
+                        <textarea
+                            {...register("opportunity_type")}
+                            rows={3}
+                            placeholder={labels.placeholder}
+                            className={`${inputClass} resize-y`}
+                        />
+                        {errors.opportunity_type && (
+                            <p className="mt-1.5 text-xs text-red-500">
+                                {errors.opportunity_type.message}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="sm:col-span-2">
+                        <label className={labelClass}>
+                            {labels.inquiries}
+                        </label>
+                        <textarea
+                            {...register("inquiries")}
+                            rows={3}
+                            placeholder={labels.placeholder}
+                            className={`${inputClass} resize-y`}
+                        />
+                        {errors.inquiries && (
+                            <p className="mt-1.5 text-xs text-red-500">
+                                {errors.inquiries.message}
+                            </p>
+                        )}
+                    </div>
                 </div>
 
-                <div>
-                    <label className={labelClass}>
-                        {labels.email} *
-                    </label>
-                    <input
-                        {...register("email")}
-                        type="email"
-                        autoComplete="email"
-                        placeholder="example@email.com"
-                        className={inputClass}
-                    />
-                    {errors.email && (
-                        <p className="mt-1.5 text-xs text-red-500">
-                            {errors.email.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="sm:col-span-2">
-                    <label className={labelClass}>
-                        {labels.phone} *
-                    </label>
-                    <input
-                        {...register("phone")}
-                        type="tel"
-                        autoComplete="tel"
-                        placeholder="+966 5X XXX XXXX"
-                        dir="ltr"
-                        className={inputClass}
-                    />
-                    {errors.phone && (
-                        <p className="mt-1.5 text-xs text-red-500">
-                            {errors.phone.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="sm:col-span-2">
-                    <label className={labelClass}>
-                        {labels.opportunity} *
-                    </label>
-                    <textarea
-                        {...register("opportunity_type")}
-                        rows={3}
-                        placeholder={labels.placeholder}
-                        className={`${inputClass} resize-y`}
-                    />
-                    {errors.opportunity_type && (
-                        <p className="mt-1.5 text-xs text-red-500">
-                            {errors.opportunity_type.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="sm:col-span-2">
-                    <label className={labelClass}>
-                        {labels.inquiries}
-                    </label>
-                    <textarea
-                        {...register("inquiries")}
-                        rows={3}
-                        placeholder={labels.placeholder}
-                        className={`${inputClass} resize-y`}
-                    />
-                    {errors.inquiries && (
-                        <p className="mt-1.5 text-xs text-red-500">
-                            {errors.inquiries.message}
-                        </p>
-                    )}
-                </div>
-            </div>
-
-            <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full cursor-pointer rounded-xl bg-[var(--theme-primary)] px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                {isSubmitting ? labels.submitting : labels.submit}
-            </button>
+                <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full cursor-pointer rounded-xl bg-[var(--theme-primary)] px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {isSubmitting ? labels.submitting : labels.submit}
+                </button>
+            </fieldset>
         </form>
     );
 }

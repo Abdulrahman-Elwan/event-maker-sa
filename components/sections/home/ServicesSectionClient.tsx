@@ -76,10 +76,9 @@ export default function ServicesSectionClient({
                                         <Image
                                             src={service.coverImage.url}
                                             alt={serviceTitle}
-                                            fill
                                             width={583}
                                             height={874}
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                                            className="object-fill w-full h-full transition-transform duration-500 group-hover:scale-110"
                                         />
                                     )}
 
@@ -155,10 +154,9 @@ export default function ServicesSectionClient({
                                 <Image
                                     src={service.coverImage.url}
                                     alt={title}
-                                    fill
                                     width={583}
                                     height={874}
-                                    className="object-cover"
+                                    className="object-fill w-full h-full"
                                 />
                             )}
 

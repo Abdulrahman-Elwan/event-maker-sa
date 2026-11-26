@@ -16,6 +16,7 @@ import WhatsappIcon from "@/components/layout/WhatsappIcon";
 import CookieConsent from "@/components/layout/CookieConsent";
 import { SITE_URL } from "@/lib/site";
 import GoogleFontsLoader from "@/components/layout/GoogleFontsLoader";
+import { Toaster } from "sonner";
 
 /* Google Fonts URL */
 function getGoogleFontsUrl(arabicFont: string, englishFont: string) {
@@ -103,6 +104,25 @@ export default async function LocaleLayout({ children, params, }: LocaleLayoutPr
       </head>
 
       <body className="min-h-full flex flex-col" style={themeStyles}>
+        <Toaster
+          position="top-center"
+          dir={locale === "ar" ? "rtl" : "ltr"}
+          theme="light"
+          duration={4500}
+          closeButton={false}
+          visibleToasts={1}
+          toastOptions={{
+            className: "registration-toast",
+            style: {
+              fontFamily: "inherit",
+              fontSize: "14px",
+              borderRadius: "10px",
+              padding: "12px 16px",
+              border: "1px solid #e5e7eb",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
+            },
+          }}
+        />
         <Suspense fallback={<div className="h-20" aria-hidden="true" />}>
           <Navbar locale={currentLocale} companyProfileUrl={companyProfileUrl} />
         </Suspense>
