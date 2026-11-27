@@ -15,7 +15,9 @@ import type { Locale } from "@/lib/i18n/config";
 import type { Exhibition } from "@/types/landingPage/exhibition";
 
 import { getExhibitionStatus } from "@/lib/utils/exhibition";
+
 import Reveal from "@/components/animations/Reveal";
+import DeferredBackgroundVideo from "@/components/animations/DeferredBackgroundVideo";
 
 interface ExhibitionHeroProps {
     locale: Locale;
@@ -49,25 +51,20 @@ function stripHtml(html: string) {
         .trim();
 }
 
-function optimizeCloudinaryPoster(url?: string) {
-    if (!url) return undefined;
-
-    return url.replace(
-        "/image/upload/",
-        "/image/upload/f_auto,q_auto:good,w_1920,c_limit/"
-    );
-}
-
 export default function ExhibitionHero({
     locale,
     exhibition,
     today,
 }: ExhibitionHeroProps) {
     const isArabic = locale === "ar";
+
     const title = exhibition.title[locale];
     const description = exhibition.description[locale];
+
     const cleanDescription = stripHtml(description);
-    const location =exhibition.location?.address?.[locale] ?? "";
+
+    const location =
+        exhibition.location?.address?.[locale] ?? "";
 
     const startDate = formatDate(
         exhibition.start_date,
@@ -79,14 +76,21 @@ export default function ExhibitionHero({
         locale,
     );
 
-    const status = getExhibitionStatus(exhibition, today);
+    const status = getExhibitionStatus(
+        exhibition,
+        today,
+    );
 
     const isOngoing = status === "ongoing";
     const isUpcoming = status === "upcoming";
 
-    const videoSrc = exhibition.hero_background_video?.url;
+    const videoSrc =
+        exhibition.hero_background_video?.url;
+
     const poster = exhibition.main_image?.url;
-    const videoPoster = optimizeCloudinaryPoster(poster);
+
+    const exhibitionLogo =
+        exhibition.exhibition_logo?.url;
 
     const visitorRegisterUrl = isArabic
         ? `/booking/visitor/${exhibition.slug}/`
@@ -103,49 +107,50 @@ export default function ExhibitionHero({
         >
             {/* Background */}
             <div className="absolute inset-0 -z-30 overflow-hidden bg-(--theme-secondary)">
-                {videoSrc ? (
-                    <video
-                        className="absolute inset-0 h-full w-full object-cover object-center"
-                        src={videoSrc}
-                        poster={videoPoster}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        preload="auto"
-                        aria-hidden="true"
-                        disablePictureInPicture
-                    />
-                ) : poster ? (
+
+                {/* Optimized Hero Poster */}
+                {poster && (
                     <Image
                         src={poster}
-                        alt={title}
+                        alt=""
                         fill
-                        priority
+                        preload
                         sizes="100vw"
+                        quality={75}
                         className="object-cover object-center"
                         aria-hidden="true"
                     />
-                ) : null}
+                )}
+
+                {/* Deferred Background Video */}
+                {videoSrc && (
+                    <DeferredBackgroundVideo
+                        src={videoSrc}
+                    />
+                )}
             </div>
 
             {/* Dark Overlay */}
             <div className="absolute inset-0 -z-20 bg-black/55" />
+
             <div className="absolute inset-0 -z-10 bg-(--theme-secondary)/50" />
 
             {/* Content */}
             <div className="relative z-10 flex min-h-svh items-center justify-center px-5 pb-14 pt-28 sm:px-8 sm:pb-16 lg:px-12">
+
                 <div className="mx-auto flex w-full max-w-220 flex-col items-center justify-center text-center">
 
                     {/* Status */}
                     <Reveal
-                        delay={100}
-                        duration={700}
-                        distance={25}
+                        delay={0}
+                        duration={450}
+                        distance={12}
                         threshold={0.15}
                     >
                         <div className="mb-5 flex justify-center">
+
                             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/25 px-4 py-2 text-[11px] font-semibold text-white/90 shadow-lg backdrop-blur-md sm:text-xs">
+
                                 <span
                                     className={`h-1.5 w-1.5 rounded-full shadow-[0_0_10px_currentColor] ${
                                         isOngoing
@@ -167,15 +172,16 @@ export default function ExhibitionHero({
                                         : isUpcoming
                                             ? "Upcoming Exhibition"
                                             : "Exhibition Ended"}
+
                             </span>
                         </div>
                     </Reveal>
 
                     {/* Title */}
                     <Reveal
-                        delay={180}
-                        duration={700}
-                        distance={30}
+                        delay={0}
+                        duration={450}
+                        distance={12}
                         threshold={0.15}
                     >
                         <h1 className="max-w-200 text-[36px] font-extrabold leading-[1.08] tracking-[-0.025em] text-(--theme-primary) drop-shadow-[0_3px_15px_rgba(0,0,0,0.4)] sm:text-[46px] md:text-[54px] lg:text-[64px] xl:text-[72px]">
@@ -184,13 +190,13 @@ export default function ExhibitionHero({
                     </Reveal>
 
                     {/* Description */}
-                    <Reveal
-                        delay={260}
-                        duration={700}
-                        distance={25}
-                        threshold={0.15}
-                    >
-                        {cleanDescription && (
+                    {cleanDescription && (
+                        <Reveal
+                            delay={80}
+                            duration={450}
+                            distance={12}
+                            threshold={0.15}
+                        >
                             <p
                                 className="mt-5 max-w-175 text-center text-sm leading-7 text-white/80 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] sm:text-base sm:leading-8"
                                 style={{
@@ -202,23 +208,28 @@ export default function ExhibitionHero({
                             >
                                 {cleanDescription}
                             </p>
-                        )}
-                    </Reveal>
+                        </Reveal>
+                    )}
 
                     {/* Registration Buttons */}
                     {(isOngoing || isUpcoming) && (
                         <Reveal
-                            delay={340}
-                            duration={700}
-                            distance={25}
+                            delay={120}
+                            duration={450}
+                            distance={12}
                             threshold={0.15}
                         >
                             <div className="mt-7 flex flex-wrap items-center justify-center gap-3 sm:mt-8 sm:gap-4">
+
+                                {/* Visitor Registration */}
                                 <Link
                                     href={visitorRegisterUrl}
                                     className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-(--theme-primary) px-6 py-3 text-sm font-bold text-(--theme-secondary) shadow-[0_8px_30px_rgba(0,0,0,0.25)] transition-all duration-300 hover:-translate-y-0.5 hover:brightness-105 sm:px-7"
                                 >
-                                    <FiUserPlus className="text-[17px]" />
+                                    <FiUserPlus
+                                        className="text-[17px]"
+                                        aria-hidden="true"
+                                    />
 
                                     <span>
                                         {isArabic
@@ -227,17 +238,27 @@ export default function ExhibitionHero({
                                     </span>
 
                                     {isArabic ? (
-                                        <FiArrowLeft className="text-[16px] transition-transform duration-300 group-hover:-translate-x-1" />
+                                        <FiArrowLeft
+                                            className="text-[16px] transition-transform duration-300 group-hover:-translate-x-1"
+                                            aria-hidden="true"
+                                        />
                                     ) : (
-                                        <FiArrowRight className="text-[16px] transition-transform duration-300 group-hover:translate-x-1" />
+                                        <FiArrowRight
+                                            className="text-[16px] transition-transform duration-300 group-hover:translate-x-1"
+                                            aria-hidden="true"
+                                        />
                                     )}
                                 </Link>
 
+                                {/* Exhibitor Registration */}
                                 <Link
                                     href={exhibitorRegisterUrl}
                                     className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/35 bg-black/15 px-6 py-3 text-sm font-semibold text-white backdrop-blur-md transition-all duration-300 hover:border-white hover:bg-white hover:text-(--theme-secondary) sm:px-7"
                                 >
-                                    <FiBriefcase className="text-[17px]" />
+                                    <FiBriefcase
+                                        className="text-[17px]"
+                                        aria-hidden="true"
+                                    />
 
                                     <span>
                                         {isArabic
@@ -245,28 +266,34 @@ export default function ExhibitionHero({
                                             : "Exhibitor Registration"}
                                     </span>
                                 </Link>
+
                             </div>
                         </Reveal>
                     )}
 
                     {/* Event Information */}
                     <Reveal
-                        delay={420}
-                        duration={700}
-                        distance={25}
+                        delay={160}
+                        duration={450}
+                        distance={12}
                         threshold={0.15}
                     >
                         <div
                             className={`mt-8 grid w-full max-w-190 grid-cols-1 gap-4 border-t border-white/15 pt-6 sm:mt-9 sm:pt-7 ${
-                                exhibition.exhibition_logo?.url
+                                exhibitionLogo
                                     ? "sm:grid-cols-3"
                                     : "sm:grid-cols-2"
                             }`}
                         >
+
                             {/* Date */}
                             <div className="flex items-center justify-center gap-3 text-start">
+
                                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--theme-primary)/40 bg-black/20 text-(--theme-primary) backdrop-blur-md">
-                                    <FiCalendar className="text-lg" />
+                                    <FiCalendar
+                                        className="text-lg"
+                                        aria-hidden="true"
+                                    />
                                 </div>
 
                                 <div className="min-w-0">
@@ -290,8 +317,12 @@ export default function ExhibitionHero({
 
                             {/* Location */}
                             <div className="flex items-center justify-center gap-3 border-white/15 text-start sm:border-s px-2">
+
                                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--theme-primary)/40 bg-black/20 text-(--theme-primary) backdrop-blur-md">
-                                    <FiMapPin className="text-lg" />
+                                    <FiMapPin
+                                        className="text-lg"
+                                        aria-hidden="true"
+                                    />
                                 </div>
 
                                 <div className="min-w-0">
@@ -308,21 +339,33 @@ export default function ExhibitionHero({
                             </div>
 
                             {/* Exhibition Logo */}
-                            {exhibition.exhibition_logo?.url && (
+                            {exhibitionLogo && (
                                 <div className="flex items-center justify-center border-white/15 pt-2 sm:border-s sm:pt-0">
+
                                     <div className="flex min-h-16 items-center justify-center rounded-2xl bg-white p-2 shadow-lg">
+
                                         <Image
-                                            src={exhibition.exhibition_logo.url}
-                                            alt={title}
+                                            src={exhibitionLogo}
+                                            alt={
+                                                isArabic
+                                                    ? `شعار ${title}`
+                                                    : `${title} logo`
+                                            }
                                             width={220}
                                             height={80}
-                                            className="max-h-14 w-auto max-w-52 object-contain rounded-2xl"
+                                            sizes="220px"
+                                            quality={75}
+                                            loading="lazy"
+                                            className="h-auto max-h-14 w-auto max-w-52 rounded-2xl object-contain"
                                         />
+
                                     </div>
                                 </div>
                             )}
+
                         </div>
                     </Reveal>
+
                 </div>
             </div>
         </section>
