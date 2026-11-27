@@ -52,7 +52,7 @@ export async function generateMetadata({ params, }: HomePageProps): Promise<Meta
 
         if (exhibition) {
             title = exhibition.title[currentLocale];
-            description = exhibition.description[currentLocale];
+            description = exhibition.meta[currentLocale];
         }
     }
 
