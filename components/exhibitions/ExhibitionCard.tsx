@@ -79,7 +79,7 @@ export default function ExhibitionCard({
                 {exhibition.main_image?.url ? (
                     <Image
                         src={exhibition.main_image.url}
-                        alt={title || 'hash'}
+                        alt={title}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1280px) 33vw, 400px"
                         className="object-cover transition-transform duration-700 group-hover:scale-105"

@@ -84,13 +84,9 @@ export default function ExhibitionHero({
     const isOngoing = status === "ongoing";
     const isUpcoming = status === "upcoming";
 
-    const videoSrc =
-        exhibition.hero_background_video?.url;
-
+    const videoSrc =exhibition.hero_background_video?.url;
     const poster = exhibition.main_image?.url;
-
-    const exhibitionLogo =
-        exhibition.exhibition_logo?.url;
+    const exhibitionLogo =exhibition.exhibition_logo?.url;
 
     const visitorRegisterUrl = isArabic
         ? `/booking/visitor/${exhibition.slug}/`
@@ -112,7 +108,7 @@ export default function ExhibitionHero({
                 {poster && (
                     <Image
                         src={poster}
-                        alt=""
+                        alt={title}
                         fill
                         preload
                         sizes="100vw"
